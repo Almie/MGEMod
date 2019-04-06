@@ -5,10 +5,10 @@
 #include <tf2_stocks>
 #include <entity_prop_stocks>
 #include <sdkhooks>
-#include <colors> 
+#include <colors>
 
 // ====[ CONSTANTS ]===================================================
-#define PL_VERSION "2.0.9.5" 
+#define PL_VERSION "2.0.9.5"
 #define MAX_FILE_LEN 80
 #define MAXARENAS 31
 #define MAXSPAWNS 15
@@ -183,7 +183,7 @@ new String:g_sBBallParticleRed[64],
 	String:g_sBBallParticleBlue[64];
 
 static const String:stockSounds[][]= // Sounds that do not need to be downloaded.
-{						
+{
 						"vo/intel_teamcaptured.wav",
 						"vo/intel_teamdropped.wav",
 						"vo/intel_teamstolen.wav",
@@ -221,11 +221,11 @@ public Plugin:myinfo =
 
 /*
 ** ------------------------------------------------------------------
-**	   ____           ______                  __  _                  
+**	   ____           ______                  __  _
 **	  / __ \____     / ____/__  ______  _____/ /_(_)____  ____  _____
 **	 / / / / __ \   / /_   / / / / __ \/ ___/ __/ // __ \/ __ \/ ___/
-**	/ /_/ / / / /  / __/  / /_/ / / / / /__/ /_/ // /_/ / / / (__  ) 
-**	\____/_/ /_/  /_/     \__,_/_/ /_/\___/\__/_/ \____/_/ /_/____/  
+**	/ /_/ / / / /  / __/  / /_/ / / / / /__/ /_/ // /_/ / / / (__  )
+**	\____/_/ /_/  /_/     \__,_/_/ /_/\___/\__/_/ \____/_/ /_/____/
 **
 ** ------------------------------------------------------------------
 **/
@@ -281,7 +281,7 @@ public OnPluginStart()
 		g_fCappedTime[i] = 0.0;
 		g_fTotalTime[i] = 0;
 	}
-	
+
 
 	// Parse default list of allowed classes.
 	ParseAllowedClasses("",g_tfctClassAllowed);
@@ -332,7 +332,7 @@ public OnPluginStart()
 	RegAdminCmd("conntest", Command_ConnectionTest, ADMFLAG_BAN, "MySQL connection test");
 
 	AddCommandListener(Command_DropItem, "dropitem");
-	
+
 	// Create the HUD text handles for later use.
 	hm_HP = CreateHudSynchronizer();
 	hm_Score = CreateHudSynchronizer();
@@ -350,13 +350,13 @@ public OnPluginStart()
 		for (new i=1;i<=MaxClients;i++)
 			if(IsValidClient(i))
 				OnClientPostAdminCheck(i);
-	
-	for (new i=0;i<=MaxClients;i++)	
+
+	for (new i=0;i<=MaxClients;i++)
 	{
 		g_bCanPlayerSwap[i] = true;
 		g_bCanPlayerGetIntel[i] = true;
 	}
-				
+
 }
 
 /* OnGetGameDescription(String:gameDesc[64])
@@ -377,19 +377,22 @@ public Action:OnGetGameDescription(String:gameDesc[64])
 * Most events are hooked here as well.
 * -------------------------------------------------------------------------- */
 public OnMapStart()
-{	
+{
 	for (new i=0;i<STOCK_SOUND_COUNT;i++) /* Stock sounds are considered mandatory. */
 		PrecacheSound(stockSounds[i], true);
+
+	PrecacheSound("mge/onechance.mp3", true);
+  AddFileToDownloadsTable("sound/mge/onechance.mp3");
 
 	// Models. These are used for the artifical flag in BBall.
 	PrecacheModel(MODEL_BRIEFCASE, true);
 	PrecacheModel(MODEL_AMMOPACK, true);
 	//Used for ultiduo/koth arenas
 	PrecacheModel(MODEL_POINT, true);
-	
+
 	g_bNoStats = (GetConVarBool(gcvar_stats)) ? false : true; /* Reset this variable, since it is forced to false during Event_WinPanel */
-	
-	
+
+
 	// Spawns
 	new isMapAm = LoadSpawnPoints();
 	if(isMapAm)
@@ -429,18 +432,18 @@ public OnMapStart()
 		HookEvent("teamplay_win_panel", Event_WinPanel, EventHookMode_Post);
 
 		AddNormalSoundHook(sound_hook);
-	} else {	
+	} else {
 		SetFailState("Map not supported. MGEMod disabled.");
 	}
-	
+
 	for(new i = 0;i < MAXPLAYERS; i++)
 	{
 		g_iPlayerWaiting[i] = false;
 		g_bCanPlayerSwap[i] = true;
 		g_bCanPlayerGetIntel[i] = true;
- 		
+
 	}
-	
+
 	for(new i = 0; i < MAXARENAS; i++)
 	{
 		g_bTimerRunning[i] = false;
@@ -468,7 +471,7 @@ public OnMapEnd()
 	UnhookEvent("teamplay_win_panel", Event_WinPanel, EventHookMode_Post);
 
 	RemoveNormalSoundHook(sound_hook);
-	
+
 	for(new arena_index = 1; arena_index < g_iArenaCount; arena_index++)
 	{
 		if(g_bTimerRunning[arena_index])
@@ -499,7 +502,7 @@ public OnProjectileTouch(entity, other)
 {
 	if(other>0 && other<=MaxClients)
 		g_bPlayerTakenDirectHit[other] = true;
-		
+
 }
 
 /* OnClientPostAdminCheck(client)
@@ -517,7 +520,7 @@ public OnClientPostAdminCheck(client)
 			{
 				if (g_bPlayerAskedForBot[i])
 				{
-					new arena_index = g_iPlayerArena[i];		
+					new arena_index = g_iPlayerArena[i];
 					new Handle:pk;
 					CreateDataTimer(1.5,Timer_AddBotInQueue,pk);
 					WritePackCell(pk, GetClientUserId(client));
@@ -559,19 +562,19 @@ public OnClientDisconnect(client)
 	if (IsValidClient(client) && g_iPlayerArena[client])
 	{
 		RemoveFromQueue(client,true);
-	} 
-	else 
-	{	
+	}
+	else
+	{
 		new arena_index = g_iPlayerArena[client],
 			player_slot = g_iPlayerSlot[client],
 			after_leaver_slot = player_slot + 1,
 			foe_slot = (player_slot==SLOT_ONE || player_slot==SLOT_THREE) ? SLOT_TWO : SLOT_ONE,
 			foe = g_iArenaQueue[arena_index][foe_slot];
-			
-		//Turn all this logic into a helper meathod	
+
+		//Turn all this logic into a helper meathod
 		new player_teammate,
 		foe2;
-			
+
 		if(g_bFourPersonArena[arena_index])
 		{
 			player_teammate = getTeammate(client, player_slot, arena_index);
@@ -582,7 +585,7 @@ public OnClientDisconnect(client)
 		g_iPlayerSlot[client] = 0;
 		g_iArenaQueue[arena_index][player_slot] = 0;
 		g_iPlayerHandicap[client] = 0;
-		
+
 		if(g_bFourPersonArena[arena_index])
 		{
 			if (g_iArenaQueue[arena_index][SLOT_FOUR+1])
@@ -603,21 +606,21 @@ public OnClientDisconnect(client)
 
 
 			} else {
-				
+
 				if (foe && IsFakeClient(foe))
 				{
 					new Handle:cvar = FindConVar("tf_bot_quota");
 					new quota = GetConVarInt(cvar);
 					ServerCommand("tf_bot_quota %d", quota - 1);
 				}
-				
+
 				if (foe2 && IsFakeClient(foe2))
 				{
 					new Handle:cvar = FindConVar("tf_bot_quota");
 					new quota = GetConVarInt(cvar);
 					ServerCommand("tf_bot_quota %d", quota - 1);
 				}
-				
+
 				if (player_teammate && IsFakeClient(player_teammate))
 				{
 					new Handle:cvar = FindConVar("tf_bot_quota");
@@ -686,13 +689,13 @@ public OnClientDisconnect(client)
  * -------------------------------------------------------------------------- */
 public OnGameFrame()
 {
-	
+
 	new arena_index;
-	
+
 	for (new client = 1; client <= MaxClients; client++)
 	{
 		if (IsValidClient(client) && IsPlayerAlive(client))
-		{	
+		{
 			arena_index = g_iPlayerArena[client];
 			if(!g_bArenaBBall[arena_index] && !g_bArenaMGE[arena_index] && !g_bArenaKoth[arena_index])
 			{
@@ -714,17 +717,17 @@ public OnGameFrame()
 				if(!(g_bPlayerTouchPoint[arena_index2][SLOT_TWO] || g_bPlayerTouchPoint[arena_index2][SLOT_FOUR]) && (g_iCappingTeam[arena_index2] == TEAM_RED || g_iCappingTeam[arena_index2] == NEUTRAL))
 				{
 					new cap = 0;
-					
+
 					if(g_bPlayerTouchPoint[arena_index2][SLOT_ONE])
 					{
 						cap++;
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_ONE]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_ONE], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -735,10 +738,10 @@ public OnGameFrame()
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_THREE]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_THREE], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -755,27 +758,27 @@ public OnGameFrame()
 						continue;
 					}
 				}
-				
+
 
 			}
-			
+
 			if(g_iPointState[arena_index2] == NEUTRAL ||  g_iPointState[arena_index2] == TEAM_RED)
 			{
 				//If BLU Team is capping and Team RED isn't and Team RED has the point increase the cap time
 				if(!(g_bPlayerTouchPoint[arena_index2][SLOT_ONE] || g_bPlayerTouchPoint[arena_index2][SLOT_THREE]) && (g_iCappingTeam[arena_index2] == TEAM_BLU || g_iCappingTeam[arena_index2] == NEUTRAL))
 				{
 					new cap = 0;
-					
+
 					if(g_bPlayerTouchPoint[arena_index2][SLOT_TWO])
 					{
 						cap++;
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_TWO]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_TWO], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -786,10 +789,10 @@ public OnGameFrame()
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_FOUR]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_FOUR], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -806,27 +809,27 @@ public OnGameFrame()
 						continue;
 					}
 				}
-				
-				
+
+
 			}
-			
+
 			//If BLU Team is blocking and RED Team isn't capping and BLU Team has the point increase the cap diminish rate
 			if((g_bPlayerTouchPoint[arena_index2][SLOT_TWO] || g_bPlayerTouchPoint[arena_index2][SLOT_FOUR]) &&
 			(g_iPointState[arena_index2] == NEUTRAL) && g_iCappingTeam[arena_index2] == TEAM_RED &&
 			!(g_bPlayerTouchPoint[arena_index2][SLOT_ONE] || g_bPlayerTouchPoint[arena_index2][SLOT_THREE]))
 			{
 					new cap = 0;
-					
+
 					if(g_bPlayerTouchPoint[arena_index2][SLOT_TWO])
 					{
 						cap++;
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_TWO]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_TWO], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -837,10 +840,10 @@ public OnGameFrame()
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_FOUR]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_FOUR], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -857,24 +860,24 @@ public OnGameFrame()
 						continue;
 					}
 			}
-			
+
 			//If RED Team is blocking and BLU Team isn't capping and RED Team has the point increase the cap diminish rate
-			if((g_bPlayerTouchPoint[arena_index2][SLOT_ONE] || g_bPlayerTouchPoint[arena_index2][SLOT_THREE]) && 
+			if((g_bPlayerTouchPoint[arena_index2][SLOT_ONE] || g_bPlayerTouchPoint[arena_index2][SLOT_THREE]) &&
 			(g_iPointState[arena_index2] == NEUTRAL) && g_iCappingTeam[arena_index2] == TEAM_BLU &&
 			!(g_bPlayerTouchPoint[arena_index2][SLOT_TWO] || g_bPlayerTouchPoint[arena_index2][SLOT_FOUR]))
 			{
 					new cap = 0;
-					
+
 					if(g_bPlayerTouchPoint[arena_index2][SLOT_ONE])
 					{
 						cap++;
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_ONE]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_ONE], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -885,10 +888,10 @@ public OnGameFrame()
 						//If the player is a Scout add one to the cap speed
 						if(g_tfctPlayerClass[g_iArenaQueue[arena_index2][SLOT_THREE]] ==TF2_GetClass("scout"))
 							cap++;
-						
+
 						new ent = GetPlayerWeaponSlot(g_iArenaQueue[arena_index2][SLOT_THREE], 2);
 						new iItemDefinitionIndex = GetEntProp(ent, Prop_Send, "m_iItemDefinitionIndex");
-						
+
 						//If the player has the Pain Train equipped add one to the cap speed
 						if(iItemDefinitionIndex == 154)
 							cap++;
@@ -905,23 +908,23 @@ public OnGameFrame()
 						continue;
 					}
 			}
-			
+
 			//If both teams are touching the point, do nothing
 			if((g_bPlayerTouchPoint[arena_index2][SLOT_TWO] || g_bPlayerTouchPoint[arena_index2][SLOT_FOUR]) && (g_bPlayerTouchPoint[arena_index2][SLOT_ONE] || g_bPlayerTouchPoint[arena_index2][SLOT_THREE]))
 				continue;
-				
+
 			// If in overtime, revert cap at 6x speed, if not, revert cap slowly
 			if (g_bOvertimePlayed[arena_index][TEAM_RED] || g_bOvertimePlayed[arena_index][TEAM_BLU])
 				g_fCappedTime[arena_index2] -= 6.0;
 			else
 				g_fCappedTime[arena_index2]--;
 		}
-		
-		
+
+
 	}
-	
-	
-	
+
+
+
 }
 
 /* OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &damagetype)
@@ -949,7 +952,7 @@ public Action:OnTakeDamage(victim, &attacker, &inflictor, &Float:damage, &damage
 * Infinite ammo is triggered here.
 * -------------------------------------------------------------------------- */
 public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:angles[3], &weapon)
-{ 
+{
 	new arena_index = g_iPlayerArena[client];
 	if(g_bArenaInfAmmo[arena_index])
 	{
@@ -968,15 +971,15 @@ public Action:OnPlayerRunCmd(client, &buttons, &impulse, Float:vel[3], Float:ang
 public Action:OnEndTouchPoint(entity, other)
 {
 	new client = other;
-	
+
 	if(!IsValidClient(client))
 		return;
 
 	new arena_index = g_iPlayerArena[client];
 	new client_slot = g_iPlayerSlot[client];
-	
+
 	g_bPlayerTouchPoint[arena_index][client_slot] = false;
-	
+
 }
 
 /* OnTouchPoint(entity, other)
@@ -986,15 +989,15 @@ public Action:OnEndTouchPoint(entity, other)
 public Action:OnTouchPoint(entity, other)
 {
 	new client = other;
-	
+
 	if(!IsValidClient(client))
 		return;
-		
+
 	new arena_index = g_iPlayerArena[client];
 	new client_slot = g_iPlayerSlot[client];
-	
+
 	g_bPlayerTouchPoint[arena_index][client_slot] = true;
-	
+
 }
 
 /* OnTouchHoop(entity, other)
@@ -1017,14 +1020,14 @@ public Action:OnTouchHoop(entity, other)
 	new foe_teammate;
 	new foe_team_slot = (foe_slot > 2) ? (foe_slot - 2) : foe_slot;
 	new client_team_slot = (client_slot > 2) ? (client_slot - 2) : client_slot;
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		client_teammate = getTeammate(client, client_slot, arena_index);
 		foe_teammate = getTeammate(foe, foe_slot, arena_index);
 	}
-	
-	
+
+
 
 	if(!IsValidClient(foe) || !g_bArenaBBall[arena_index])
 		return;
@@ -1048,27 +1051,27 @@ public Action:OnTouchHoop(entity, other)
 		{
 			g_iArenaStatus[arena_index] = AS_REPORTED;
 			GetClientName(client,client_name, sizeof(client_name));
-			
+
 			if(g_bFourPersonArena[arena_index])
 			{
 				new String:client_teammate_name[128];
 				new String:foe_teammate_name[128];
-				
+
 				GetClientName(client_teammate,client_teammate_name, sizeof(client_teammate_name));
 				GetClientName(foe_teammate,foe_teammate_name, sizeof(foe_teammate_name));
-				
-				Format(client_name, sizeof(client_name), "%s and %s", client_name, client_teammate_name); 
-				Format(foe_name, sizeof(foe_name), "%s and %s", foe_name, foe_teammate_name); 
+
+				Format(client_name, sizeof(client_name), "%s and %s", client_name, client_teammate_name);
+				Format(foe_name, sizeof(foe_name), "%s and %s", foe_name, foe_teammate_name);
 			}
-			
+
 			CPrintToChatAll("%t","XdefeatsY", client_name, g_iArenaScore[arena_index][client_team_slot], foe_name, g_iArenaScore[arena_index][foe_team_slot], fraglimit, g_sArenaName[arena_index]);
 
 			if (!g_bNoStats && !g_bFourPersonArena[arena_index])
 				CalcELO(client,foe);
-			
+
 			else if(!g_bNoStats)
 				CalcELO2(client, client_teammate, foe, foe_teammate);
-				
+
 			if(IsValidEdict(g_iBBallIntel[arena_index]) && g_iBBallIntel[arena_index] > -1)
 			{
 				//SDKUnhook(g_iBBallIntel[arena_index], SDKHook_StartTouch, OnTouchIntel);
@@ -1092,28 +1095,28 @@ public Action:OnTouchHoop(entity, other)
 		} else {
 			ResetPlayer(client);
 			ResetPlayer(foe);
-			
+
 			if(g_bFourPersonArena[arena_index])
 			{
 				ResetPlayer(client_teammate);
 				ResetPlayer(foe_teammate);
 			}
-			
+
 			CreateTimer(0.15, Timer_ResetIntel, GetClientUserId(client), TIMER_FLAG_NO_MAPCHANGE);
 		}
 
-		ShowPlayerHud(client); 
+		ShowPlayerHud(client);
 		ShowPlayerHud(foe);
-		
+
 		if(g_bFourPersonArena[arena_index])
 		{
 			ShowPlayerHud(client_teammate);
 			ShowPlayerHud(foe_teammate);
 		}
-			
+
 		EmitSoundToClient(client, "vo/intel_teamcaptured.wav");
 		EmitSoundToClient(foe, "vo/intel_enemycaptured.wav");
-		
+
 		if(g_bFourPersonArena[arena_index])
 		{
 			//This shouldn't be necessary but I'm getting invalid clients for some reason.
@@ -1122,7 +1125,7 @@ public Action:OnTouchHoop(entity, other)
 			if(IsValidClient(foe_teammate))
 				EmitSoundToClient(foe_teammate, "vo/intel_enemycaptured.wav");
 		}
-			
+
 		ShowSpecHudToArena(arena_index);
 	}
 }
@@ -1137,7 +1140,7 @@ public Action:OnTouchIntel(entity, other)
 
 	if(!IsValidClient(client))
 		return;
-	
+
 	if(!g_bCanPlayerGetIntel[client])
 		return;
 
@@ -1165,7 +1168,7 @@ public Action:OnTouchIntel(entity, other)
 
 	// Attach a team-colored particle to give a visual cue that a player is holding the intel, since we can't attach models.
 	particle = EntRefToEntIndex(g_iClientParticle[client]);
-	if (particle==0 || !IsValidEntity(particle))	
+	if (particle==0 || !IsValidEntity(particle))
 	{
 		if (team==TFTeam_Red)
 			AttachParticle(client,g_sBBallParticleRed,particle);
@@ -1179,14 +1182,14 @@ public Action:OnTouchIntel(entity, other)
 	EmitSoundToClient(client, "vo/intel_teamstolen.wav");
 
 	new foe = g_iArenaQueue[g_iPlayerArena[client]][(g_iPlayerSlot[client]==SLOT_ONE || g_iPlayerSlot[client]==SLOT_THREE) ? SLOT_TWO : SLOT_ONE];
-	
-	
+
+
 	if(IsValidClient(foe))
 	{
 		EmitSoundToClient(foe, "vo/intel_enemystolen.wav");
 		ShowPlayerHud(foe);
 	}
-	
+
 	if(g_bFourPersonArena[g_iPlayerArena[client]])
 	{
 		new foe2 = g_iArenaQueue[g_iPlayerArena[client]][(g_iPlayerSlot[client]==SLOT_ONE || g_iPlayerSlot[client]==SLOT_THREE) ? SLOT_FOUR : SLOT_THREE];
@@ -1200,12 +1203,12 @@ public Action:OnTouchIntel(entity, other)
 
 /*
 ** -------------------------------------------------------------------------------
-**	    ____       _              ______                  __  _                  
+**	    ____       _              ______                  __  _
 **	   / __ \_____(_)_   __      / ____/__  ______  _____/ /_(_)____  ____  _____
 **	  / /_/ / ___/ /| | / /     / /_   / / / / __ \/ ___/ __/ // __ \/ __ \/ ___/
-**	 / ____/ /  / / | |/ /_    / __/  / /_/ / / / / /__/ /_/ // /_/ / / / (__  ) 
-**	/_/   /_/  /_/  |___/(_)  /_/     \__,_/_/ /_/\___/\__/_/ \____/_/ /_/____/  
-**	
+**	 / ____/ /  / / | |/ /_    / __/  / /_/ / / / / /__/ /_/ // /_/ / / / (__  )
+**	/_/   /_/  /_/  |___/(_)  /_/     \__,_/_/ /_/\___/\__/_/ \____/_/ /_/____/
+**
 ** -------------------------------------------------------------------------------
 **/
 
@@ -1213,21 +1216,21 @@ StartCountDown(arena_index)
 {
 	new red_f1 = g_iArenaQueue[arena_index][SLOT_ONE]; /* Red (slot one) player. */
 	new blu_f1 = g_iArenaQueue[arena_index][SLOT_TWO]; /* Blu (slot two) player. */
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		new red_f2 = g_iArenaQueue[arena_index][SLOT_THREE]; /* 2nd Red (slot three) player. */
 		new blu_f2 = g_iArenaQueue[arena_index][SLOT_FOUR]; /* 2nd Blu (slot four) player. */
-		
+
 		if(red_f1)
 			ResetPlayer(red_f1);
 		if(blu_f1)
-			ResetPlayer(blu_f1);	
+			ResetPlayer(blu_f1);
 		if(red_f2)
 			ResetPlayer(red_f2);
 		if(blu_f2)
 			ResetPlayer(blu_f2);
-			
+
 
 		if (red_f1 && blu_f1 && red_f2 && blu_f2)
 		{
@@ -1236,7 +1239,7 @@ StartCountDown(arena_index)
 			for (new i=0;i<=2;i++)
 			{
 				new ent = GetPlayerWeaponSlot(red_f1, i);
-	
+
 				if(IsValidEntity(ent))
 					SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", enginetime+1.1);
 
@@ -1244,9 +1247,9 @@ StartCountDown(arena_index)
 
 				if(IsValidEntity(ent))
 					SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", enginetime+1.1);
-					
+
 				ent = GetPlayerWeaponSlot(red_f2, i);
-	
+
 				if(IsValidEntity(ent))
 					SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", enginetime+1.1);
 
@@ -1255,8 +1258,8 @@ StartCountDown(arena_index)
 				if(IsValidEntity(ent))
 					SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", enginetime+1.1);
 			}
-			
-			
+
+
 			g_iArenaCd[arena_index] = g_iArenaCdTime[arena_index] + 1;
 			g_iArenaStatus[arena_index] = AS_PRECOUNTDOWN;
 			CreateTimer(0.0,Timer_CountDown,arena_index,TIMER_FLAG_NO_MAPCHANGE);
@@ -1271,7 +1274,7 @@ StartCountDown(arena_index)
 			ResetPlayer(red_f1);
 		if(blu_f1)
 			ResetPlayer(blu_f1);
-			
+
 		if (red_f1 && blu_f1)
 		{
 			new Float:enginetime = GetGameTime();
@@ -1294,14 +1297,14 @@ StartCountDown(arena_index)
 			CreateTimer(0.0,Timer_CountDown,arena_index,TIMER_FLAG_NO_MAPCHANGE);
 			return 1;
 		}
-		else 
+		else
 		{
 			g_iArenaStatus[arena_index] = AS_IDLE;
 			return 0;
 		}
 	}
-	
-	
+
+
 }
 
 // ====[ HUD ]====================================================
@@ -1331,11 +1334,11 @@ ShowCountdownToSpec(arena_index,String:text[])
 
 ShowPlayerHud(client)
 {
-	if (!IsValidClient(client)) 
+	if (!IsValidClient(client))
 		return;
-	
-	
-	
+
+
+
 	// HP
 	new arena_index = g_iPlayerArena[client];
 	new client_slot = g_iPlayerSlot[client];
@@ -1344,17 +1347,17 @@ ShowPlayerHud(client)
 	new client_teammate;
 	new client_foe2;
 	new String:hp_report[128];
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		client_teammate = getTeammate(client, client_slot, arena_index);
 		client_foe2 = getTeammate(client_foe, client_foe_slot, arena_index);
 
 	}
-	
-	
-	
-	
+
+
+
+
 	if(g_bArenaKoth[arena_index])
 	{
 		if(g_iArenaStatus[arena_index] == AS_FIGHT || true)
@@ -1364,10 +1367,10 @@ ShowPlayerHud(client)
 				SetHudTextParams(0.40, 0.01, HUDFADEOUTTIME, 255,0,0,255); // Red
 			else
 				SetHudTextParams(0.40, 0.01, HUDFADEOUTTIME, 255,255,255,255);
-				
+
 			//Set the Text for the timer
 			ShowSyncHudText(client, hm_KothTimerRED, "%i:%02i", g_iKothTimer[arena_index][TEAM_RED] / 60, g_iKothTimer[arena_index][TEAM_RED] % 60 );
-			
+
 			//Show the blue team timer, if they have it capped make the timer blue
 			if(g_iPointState[arena_index] == TEAM_BLU)
 				SetHudTextParams(0.60, 0.01, HUDFADEOUTTIME, 0,0,255,255); // Blue
@@ -1375,7 +1378,7 @@ ShowPlayerHud(client)
 				SetHudTextParams(0.60, 0.01, HUDFADEOUTTIME, 255,255,255,255);
 			//Set the Text for the timer
 			ShowSyncHudText(client, hm_KothTimerBLU, "%i:%02i", g_iKothTimer[arena_index][TEAM_BLU] / 60, g_iKothTimer[arena_index][TEAM_BLU] % 60);
-			
+
 			//Show the capture point percent
 			//set it red if red team is capping
 			if(g_iCappingTeam[arena_index] == TEAM_RED)
@@ -1390,8 +1393,8 @@ ShowPlayerHud(client)
 			ShowSyncHudText(client, hm_KothCap, "Point Capture: %.1f", g_fKothCappedPercent[arena_index]);
 		}
 	}
-	
-	
+
+
 	if(g_bArenaShowHPToPlayers[arena_index])
 	{
 		new Float:hp_ratio = ((float(g_iPlayerHP[client])) / (float(g_iPlayerMaxHP[client])*g_fArenaHPRatio[arena_index]));
@@ -1407,7 +1410,7 @@ ShowPlayerHud(client)
 		ShowSyncHudText(client, hm_HP, "", g_iPlayerHP[client]);
 	}
 
-	
+
 
 	if(g_bArenaBBall[arena_index])
 	{
@@ -1425,9 +1428,9 @@ ShowPlayerHud(client)
 			ShowSyncHudText(client, hm_HP, "", g_iPlayerHP[client]);
 		}
 	}
-	
+
 	// We want ammomod players to be able to see what their health is, even when they have the text hud turned off.
-	// We also want to show them BBALL notifications	
+	// We also want to show them BBALL notifications
 	if(!g_bShowHud[client])
 		return;
 
@@ -1477,8 +1480,8 @@ ShowPlayerHud(client)
 				else
 					Format(report,sizeof(report),"%s\n%N (%d): %d",report,red_f1,g_iPlayerRating[red_f1],g_iArenaScore[arena_index][SLOT_ONE]);
 			}
-			
-			
+
+
 		}
 		if (blu_f1)
 		{
@@ -1498,7 +1501,7 @@ ShowPlayerHud(client)
 			}
 		}
 	}
-	
+
 	else
 	{
 		if (red_f1)
@@ -1518,12 +1521,12 @@ ShowPlayerHud(client)
 		}
 	}
 	ShowSyncHudText(client, hm_Score, "%s",report);
-	
-	
+
+
 	//Hp of teammate
 	if(g_bFourPersonArena[arena_index])
 	{
-		
+
 		if(client_teammate)
 			Format(hp_report,sizeof(hp_report),"%N : %d", client_teammate,g_iPlayerHP[client_teammate]);
 	}
@@ -1532,24 +1535,24 @@ ShowPlayerHud(client)
 }
 
 ShowSpecHudToClient(client)
-{	
-	if (!IsValidClient(client) || !IsValidClient(g_iPlayerSpecTarget[client]) || !g_bShowHud[client]) 
+{
+	if (!IsValidClient(client) || !IsValidClient(g_iPlayerSpecTarget[client]) || !g_bShowHud[client])
 		return;
 
-	new arena_index = g_iPlayerArena[g_iPlayerSpecTarget[client]];	
+	new arena_index = g_iPlayerArena[g_iPlayerSpecTarget[client]];
 	new red_f1 = g_iArenaQueue[arena_index][SLOT_ONE];
 	new blu_f1 = g_iArenaQueue[arena_index][SLOT_TWO];
 	new red_f2;
 	new blu_f2;
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		red_f2 = g_iArenaQueue[arena_index][SLOT_THREE];
 		blu_f2 = g_iArenaQueue[arena_index][SLOT_FOUR];
 	}
-	
+
 	new String:hp_report[128];
-	
+
 	//If its a 2v2 arena show the teamates hp's
 	if(g_bFourPersonArena[arena_index])
 	{
@@ -1558,7 +1561,7 @@ ShowSpecHudToClient(client)
 
 		if (red_f2)
 			Format(hp_report,sizeof(hp_report),"%s\n%N : %d", hp_report, red_f2,g_iPlayerHP[red_f2]);
-		
+
 		if (blu_f1)
 			Format(hp_report,sizeof(hp_report),"%s\n\n%N : %d",hp_report, blu_f1, g_iPlayerHP[blu_f1]);
 
@@ -1573,9 +1576,9 @@ ShowSpecHudToClient(client)
 		if (blu_f1)
 			Format(hp_report,sizeof(hp_report),"%s\n%N : %d",hp_report,blu_f1, g_iPlayerHP[blu_f1]);
 	}
-	
-	
-	
+
+
+
 	SetHudTextParams(0.01, 0.80, HUDFADEOUTTIME, 255,255,255,255);
 	ShowSyncHudText(client, hm_HP, hp_report);
 
@@ -1591,12 +1594,12 @@ ShowSpecHudToClient(client)
 			Format(report,sizeof(report),"Arena %s. Frag Limit(%d)",g_sArenaName[arena_index],fraglimit);
 		else
 			Format(report,sizeof(report),"Arena %s. No Frag Limit",g_sArenaName[arena_index]);
-	} 
+	}
 	else
 	{
 		Format(report,sizeof(report),"Arena[%s]",g_sArenaName[arena_index]);
 	}
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		if (red_f1)
@@ -1615,8 +1618,8 @@ ShowSpecHudToClient(client)
 				else
 					Format(report,sizeof(report),"%s\n%N (%d): %d",report,red_f1,g_iPlayerRating[red_f1],g_iArenaScore[arena_index][SLOT_ONE]);
 			}
-			
-			
+
+
 		}
 		if (blu_f1)
 		{
@@ -1636,7 +1639,7 @@ ShowSpecHudToClient(client)
 			}
 		}
 	}
-	
+
 	else
 	{
 		if (red_f1)
@@ -1655,7 +1658,7 @@ ShowSpecHudToClient(client)
 				Format(report,sizeof(report),"%s\n%N (%d): %d",report,blu_f1,g_iPlayerRating[blu_f1],g_iArenaScore[arena_index][SLOT_TWO]);
 		}
 	}
-	
+
 	ShowSyncHudText(client, hm_Score, "%s",report);
 }
 
@@ -1668,7 +1671,7 @@ ShowHudToAll()
 	{
 		if(g_iPlayerArena[i])
 			ShowPlayerHud(i);
-	}	
+	}
 }
 
 HideHud(client)
@@ -1680,7 +1683,7 @@ HideHud(client)
 	ClearSyncHud(client,hm_HP);
 }
 
-// ====[ QUEUE ]==================================================== 
+// ====[ QUEUE ]====================================================
 RemoveFromQueue(client, bool:calcstats=false, bool:specfix=false)
 {
 	new arena_index = g_iPlayerArena[client];
@@ -1705,8 +1708,8 @@ RemoveFromQueue(client, bool:calcstats=false, bool:specfix=false)
 			CreateTimer(0.1, Timer_SpecFix, GetClientUserId(client));
 	}
 
-	new after_leaver_slot = player_slot + 1; 
-	
+	new after_leaver_slot = player_slot + 1;
+
 	//I beleive I don't need to do this anymore BUT
 	//If the player was in the arena, and the timer was running, kill it
 	if(((player_slot <= SLOT_TWO) || (g_bFourPersonArena[arena_index] && player_slot <= SLOT_FOUR)) && g_bTimerRunning[arena_index])
@@ -1714,27 +1717,27 @@ RemoveFromQueue(client, bool:calcstats=false, bool:specfix=false)
 		KillTimer(g_tKothTimer[arena_index]);
 		g_bTimerRunning[arena_index] = false;
 	}
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		new foe_team_slot;
 		new player_team_slot;
-		
+
 		if (player_slot <= SLOT_FOUR && player_slot > 0)
 		{
 			new foe_slot = (player_slot==SLOT_ONE || player_slot==SLOT_THREE) ? SLOT_TWO : SLOT_ONE;
 			new foe = g_iArenaQueue[arena_index][foe_slot];
 			new player_teammate;
 			new foe2;
-			
+
 			foe_team_slot = (foe_slot > 2) ? (foe_slot - 2) : foe_slot;
 			player_team_slot = (player_slot > 2) ? (player_slot - 2) : player_slot;
-			
+
 			if(g_bFourPersonArena[arena_index])
 			{
 				player_teammate = getTeammate(client, player_slot, arena_index);
 				foe2 = getTeammate(foe, foe_slot, arena_index);
-				
+
 			}
 
 			if(g_bArenaBBall[arena_index])
@@ -1754,13 +1757,13 @@ RemoveFromQueue(client, bool:calcstats=false, bool:specfix=false)
 					RemoveClientParticle(foe);
 					g_bPlayerHasIntel[foe] = false;
 				}
-				
+
 				if(foe2)
 				{
 					RemoveClientParticle(foe2);
 					g_bPlayerHasIntel[foe2] = false;
 				}
-				
+
 				if(player_teammate)
 				{
 					RemoveClientParticle(player_teammate);
@@ -1774,17 +1777,17 @@ RemoveFromQueue(client, bool:calcstats=false, bool:specfix=false)
 				new String:player_name[MAX_NAME_LENGTH * 2];
 				new String:foe2_name[MAX_NAME_LENGTH];
 				new String:player_teammate_name[MAX_NAME_LENGTH];
-				
+
 				GetClientName(foe,foe_name, sizeof(foe_name));
 				GetClientName(client,player_name, sizeof(player_name));
 				GetClientName(foe2,foe2_name, sizeof(foe2_name));
 				GetClientName(player_teammate,player_teammate_name, sizeof(player_teammate_name));
-				
-				Format(foe_name, sizeof(foe_name), "%s and %s", foe_name, foe2_name); 
-				Format(player_name, sizeof(player_name), "%s and %s", player_name, player_teammate_name); 
-				
+
+				Format(foe_name, sizeof(foe_name), "%s and %s", foe_name, foe2_name);
+				Format(player_name, sizeof(player_name), "%s and %s", player_name, player_teammate_name);
+
 				g_iArenaStatus[arena_index] = AS_REPORTED;
-				
+
 				if(g_iArenaScore[arena_index][foe_team_slot] > g_iArenaScore[arena_index][player_team_slot])
 				{
 					if(g_iArenaScore[arena_index][foe_team_slot] >= g_iArenaEarlyLeave[arena_index])
@@ -1824,9 +1827,9 @@ RemoveFromQueue(client, bool:calcstats=false, bool:specfix=false)
 				g_iArenaStatus[arena_index] = AS_IDLE;
 				return;
 			}
-		}	
+		}
 	}
-	
+
 	else
 	{
 		if (player_slot==SLOT_ONE || player_slot==SLOT_TWO)
@@ -1923,7 +1926,7 @@ AddInQueue(client,arena_index, bool:showmsg = true, playerPrefTeam = 0)
 	{
 		PrintToChatAll("client <%N> is already on arena %d",client,arena_index);
 	}
-	
+
 	//Set the player to the preffered team if there is room, otherwise just add him in wherever there is a slot
 	new player_slot = SLOT_ONE;
 	if(playerPrefTeam == TEAM_RED)
@@ -1955,7 +1958,7 @@ AddInQueue(client,arena_index, bool:showmsg = true, playerPrefTeam = 0)
 		while (g_iArenaQueue[arena_index][player_slot])
 			player_slot++;
 	}
-	
+
 	g_iPlayerArena[client] = arena_index;
 	g_iPlayerSlot[client] = player_slot;
 	g_iArenaQueue[arena_index][player_slot] = client;
@@ -1973,7 +1976,7 @@ AddInQueue(client,arena_index, bool:showmsg = true, playerPrefTeam = 0)
 			decl String:name[MAX_NAME_LENGTH];
 			GetClientName(client,name,sizeof(name));
 
-			if(!g_bNoStats && !g_bNoDisplayRating)	
+			if(!g_bNoStats && !g_bNoDisplayRating)
 			CPrintToChatAll("%t","JoinsArena",name,g_iPlayerRating[client],g_sArenaName[arena_index]);
 			else
 				CPrintToChatAll("%t","JoinsArenaNoStats",name,g_sArenaName[arena_index]);
@@ -1993,14 +1996,14 @@ AddInQueue(client,arena_index, bool:showmsg = true, playerPrefTeam = 0)
 					CPrintToChat(client,"%t","InLine",player_slot-SLOT_FOUR);
 			}
 	}
-	else 
+	else
 	{
 		if (player_slot <= SLOT_TWO)
 		{
 			decl String:name[MAX_NAME_LENGTH];
 			GetClientName(client,name,sizeof(name));
-	
-			if(!g_bNoStats && !g_bNoDisplayRating)	
+
+			if(!g_bNoStats && !g_bNoDisplayRating)
 				CPrintToChatAll("%t","JoinsArena",name,g_iPlayerRating[client],g_sArenaName[arena_index]);
 			else
 				CPrintToChatAll("%t","JoinsArenaNoStats",name,g_sArenaName[arena_index]);
@@ -2055,26 +2058,26 @@ CalcELO(winner, loser)
 	//I don't want to penalize the player that doesn't leave, so only the winners/leavers ELO will be effected.
 	new winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner];
 	new loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser];
-	
+
 	// DB entry for this specific duel.
 	if(g_bUseSQLite)
 	{
-		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels VALUES ('%s', '%s', %i, %i, %i, %i, '%s', '%s')", 
+		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels VALUES ('%s', '%s', %i, %i, %i, %i, '%s', '%s')",
 										g_sPlayerSteamID[winner], g_sPlayerSteamID[loser], g_iArenaScore[arena_index][winner_team_slot], g_iArenaScore[arena_index][loser_team_slot], g_iArenaFraglimit[arena_index], time, g_sMapName, g_sArenaName[arena_index]);
 		SQL_TQuery(db, SQLErrorCheckCallback, query);
 	} else {
-		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels (winner, loser, winnerscore, loserscore, winlimit, gametime, mapname, arenaname) VALUES ('%s', '%s', %i, %i, %i, %i, '%s', '%s')", 
+		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels (winner, loser, winnerscore, loserscore, winlimit, gametime, mapname, arenaname) VALUES ('%s', '%s', %i, %i, %i, %i, '%s', '%s')",
 										g_sPlayerSteamID[winner], g_sPlayerSteamID[loser], g_iArenaScore[arena_index][winner_team_slot], g_iArenaScore[arena_index][loser_team_slot], g_iArenaFraglimit[arena_index], time, g_sMapName, g_sArenaName[arena_index]);
 		SQL_TQuery(db, SQLErrorCheckCallback, query);
 	}
 
 	//winner's stats
-	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,wins=wins+1,lastplayed=%i WHERE steamid='%s'", 
+	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,wins=wins+1,lastplayed=%i WHERE steamid='%s'",
 									g_iPlayerRating[winner], time, g_sPlayerSteamID[winner]);
 	SQL_TQuery(db, SQLErrorCheckCallback, query);
 
 	//loser's stats
-	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,losses=losses+1,lastplayed=%i WHERE steamid='%s'", 
+	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,losses=losses+1,lastplayed=%i WHERE steamid='%s'",
 									g_iPlayerRating[loser], time, g_sPlayerSteamID[loser]);
 	SQL_TQuery(db, SQLErrorCheckCallback, query);
 }
@@ -2084,8 +2087,8 @@ CalcELO2(winner, winner2, loser, loser2)
 	if (IsFakeClient(winner) || IsFakeClient(loser) || g_bNoStats || IsFakeClient(loser2) || IsFakeClient(winner2))
 		return;
 
-	
-	
+
+
 	new Float:Losers_ELO = float((g_iPlayerRating[loser] + g_iPlayerRating[loser2]) / 2);
 	new Float:Winners_ELO = float((g_iPlayerRating[winner] + g_iPlayerRating[winner2]) / 2);
 	// ELO formula
@@ -2098,10 +2101,10 @@ CalcELO2(winner, winner2, loser, loser2)
 	new loserscore = RoundFloat(k*El);
 	g_iPlayerRating[loser] -= loserscore;
 	g_iPlayerRating[loser2] -= loserscore;
-	
+
 	new winner_team_slot = (g_iPlayerSlot[winner] > 2) ? (g_iPlayerSlot[winner] - 2) : g_iPlayerSlot[winner];
 	new loser_team_slot = (g_iPlayerSlot[loser] > 2) ? (g_iPlayerSlot[loser] - 2) : g_iPlayerSlot[loser];
-	
+
 	new arena_index = g_iPlayerArena[winner];
 	new time = GetTime();
 	decl String:query[512], String:sCleanArenaname[128], String:sCleanMapName[128];
@@ -2111,46 +2114,46 @@ CalcELO2(winner, winner2, loser, loser2)
 
 	if(IsValidClient(winner) && !g_bNoDisplayRating)
 		CPrintToChat(winner, "%t","GainedPoints",winnerscore);
-		
+
 	if(IsValidClient(winner2) && !g_bNoDisplayRating)
 		CPrintToChat(winner2, "%t","GainedPoints",winnerscore);
 
 	if(IsValidClient(loser) && !g_bNoDisplayRating)
 		CPrintToChat(loser, "%t","LostPoints",loserscore);
-		
+
 	if(IsValidClient(loser2) && !g_bNoDisplayRating)
 		CPrintToChat(loser2, "%t","LostPoints",loserscore);
 
-	
+
 	// DB entry for this specific duel.
 	if(g_bUseSQLite)
 	{
-		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels_2v2 VALUES ('%s', '%s', '%s', '%s', %i, %i, %i, %i, '%s', '%s')", 
+		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels_2v2 VALUES ('%s', '%s', '%s', '%s', %i, %i, %i, %i, '%s', '%s')",
 										g_sPlayerSteamID[winner], g_sPlayerSteamID[winner2], g_sPlayerSteamID[loser], g_sPlayerSteamID[loser2], g_iArenaScore[arena_index][winner_team_slot], g_iArenaScore[arena_index][loser_team_slot], g_iArenaFraglimit[arena_index], time, g_sMapName, g_sArenaName[arena_index]);
 		SQL_TQuery(db, SQLErrorCheckCallback, query);
 	} else {
-		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels_2v2 (winner, winner2, loser, loser2, winnerscore, loserscore, winlimit, gametime, mapname, arenaname) VALUES ('%s', '%s', '%s', '%s', %i, %i, %i, %i, '%s', '%s')", 
+		Format(query, sizeof(query), 	"INSERT INTO mgemod_duels_2v2 (winner, winner2, loser, loser2, winnerscore, loserscore, winlimit, gametime, mapname, arenaname) VALUES ('%s', '%s', '%s', '%s', %i, %i, %i, %i, '%s', '%s')",
 										g_sPlayerSteamID[winner], g_sPlayerSteamID[winner2], g_sPlayerSteamID[loser], g_sPlayerSteamID[loser2], g_iArenaScore[arena_index][winner_team_slot], g_iArenaScore[arena_index][loser_team_slot], g_iArenaFraglimit[arena_index], time, g_sMapName, g_sArenaName[arena_index]);
 		SQL_TQuery(db, SQLErrorCheckCallback, query);
 	}
 
 	//winner's stats
-	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,wins=wins+1,lastplayed=%i WHERE steamid='%s'", 
+	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,wins=wins+1,lastplayed=%i WHERE steamid='%s'",
 									g_iPlayerRating[winner], time, g_sPlayerSteamID[winner]);
 	SQL_TQuery(db, SQLErrorCheckCallback, query);
-	
+
 	//winner's teammate stats
-	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,wins=wins+1,lastplayed=%i WHERE steamid='%s'", 
+	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,wins=wins+1,lastplayed=%i WHERE steamid='%s'",
 									g_iPlayerRating[winner2], time, g_sPlayerSteamID[winner2]);
 	SQL_TQuery(db, SQLErrorCheckCallback, query);
 
 	//loser's stats
-	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,losses=losses+1,lastplayed=%i WHERE steamid='%s'", 
+	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,losses=losses+1,lastplayed=%i WHERE steamid='%s'",
 									g_iPlayerRating[loser], time, g_sPlayerSteamID[loser]);
 	SQL_TQuery(db, SQLErrorCheckCallback, query);
-	
+
 	//loser's teammate stats
-	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,losses=losses+1,lastplayed=%i WHERE steamid='%s'", 
+	Format(query, sizeof(query), 	"UPDATE mgemod_stats SET rating=%i,losses=losses+1,lastplayed=%i WHERE steamid='%s'",
 									g_iPlayerRating[loser2], time, g_sPlayerSteamID[loser2]);
 	SQL_TQuery(db, SQLErrorCheckCallback, query);
 }
@@ -2254,7 +2257,7 @@ LoadSpawnPoints()
 							decl String:sAllowedClasses[128];
 							KvGetString(kv, "classes", sAllowedClasses, sizeof(sAllowedClasses));
 							LogMessage("%s classes: <%s>", g_sArenaName[g_iArenaCount], sAllowedClasses);
-							ParseAllowedClasses(sAllowedClasses,g_tfctArenaAllowedClasses[g_iArenaCount]); 
+							ParseAllowedClasses(sAllowedClasses,g_tfctArenaAllowedClasses[g_iArenaCount]);
 						} while (KvGotoNextKey(kv));
 					}
 					break;
@@ -2283,32 +2286,32 @@ ResetPlayer(client)
 {
 	new arena_index = g_iPlayerArena[client];
 	new player_slot = g_iPlayerSlot[client];
-	
-	
+
+
 	if (!arena_index || !player_slot)
 	{
 		return 0;
 	}
 
 	g_iPlayerSpecTarget[client] = 0;
-	
+
 	if(player_slot == SLOT_ONE || player_slot == SLOT_THREE)
 		ChangeClientTeam(client, TEAM_RED);
 	else
 		ChangeClientTeam(client, TEAM_BLU);
-		
+
 	//This logic doesn't work with 2v2's
 	//new team = GetClientTeam(client);
-	//if (player_slot - team != SLOT_ONE - TEAM_RED) 
+	//if (player_slot - team != SLOT_ONE - TEAM_RED)
 	//	ChangeClientTeam(client, player_slot + TEAM_RED - SLOT_ONE);
-	
+
 
 	new TFClassType:class;
 	class = g_tfctPlayerClass[client] ? g_tfctPlayerClass[client] : TFClass_Soldier;
 
 	if (!IsPlayerAlive(client) || g_bArenaBBall[arena_index])
 	{
-		if (class != TF2_GetPlayerClass(client)) 
+		if (class != TF2_GetPlayerClass(client))
 			TF2_SetPlayerClass(client,class);
 
 		TF2_RespawnPlayer(client);
@@ -2381,7 +2384,7 @@ ResetIntel(arena_index, any:client = -1)
 				intel_loc[1] = g_fArenaSpawnOrigin[arena_index][g_iArenaSpawns[arena_index]-2][1];
 				intel_loc[2] = g_fArenaSpawnOrigin[arena_index][g_iArenaSpawns[arena_index]-2][2];
 			}
-		} else {	
+		} else {
 			intel_loc[0] = g_fArenaSpawnOrigin[arena_index][g_iArenaSpawns[arena_index]-4][0];
 			intel_loc[1] = g_fArenaSpawnOrigin[arena_index][g_iArenaSpawns[arena_index]-4][1];
 			intel_loc[2] = g_fArenaSpawnOrigin[arena_index][g_iArenaSpawns[arena_index]-4][2];
@@ -2407,7 +2410,7 @@ SetPlayerToAllowedClass(client, arena_index)
 		for(new i=1;i<=9;i++)
 		{
 			if (g_tfctArenaAllowedClasses[arena_index][i])
-			{	
+			{
 				if(g_bArenaUltiduo[arena_index] && g_bFourPersonArena[arena_index] && g_iPlayerSlot[client] > SLOT_TWO)
 				{
 					new client_teammate;
@@ -2429,7 +2432,7 @@ SetPlayerToAllowedClass(client, arena_index)
 				}
 				else
 					g_tfctPlayerClass[client] = TFClassType:i;
-				
+
 				break;
 			}
 		}
@@ -2454,9 +2457,9 @@ ParseAllowedClasses(const String:sList[],output[TFClassType])
 
 	for (new i=0;i<count;i++)
 	{
-		new TFClassType:c = TF2_GetClass(a_class[i]); 
+		new TFClassType:c = TF2_GetClass(a_class[i]);
 
-		if (c) 
+		if (c)
 			output[c] = 1;
 	}
 }
@@ -2503,11 +2506,11 @@ ShowSwapMenu(client)
 {
 	if (client<=0)
 		return;
-		
+
 	decl String:title[128];
 
 	new Handle:menu = CreateMenu(SwapMenuHandler);
-	
+
 	Format(title, sizeof(title), "Would you like to swap classes with your teammate?", client);
 	SetMenuTitle(menu, title);
 	AddMenuItem(menu, "yes", "Yes");
@@ -2580,7 +2583,7 @@ ShowMainMenu(client,bool:listplayers=true)
 				else if (red_f1>0)
 					Format(report,sizeof(report),"%s \x04%N (%d)\x05",report,red_f1,g_iPlayerRating[red_f1]);
 				else if (blu_f1>0)
-					Format(report,sizeof(report),"%s \x04%N (%d)\x05",report,blu_f1,g_iPlayerRating[blu_f1]);	
+					Format(report,sizeof(report),"%s \x04%N (%d)\x05",report,blu_f1,g_iPlayerRating[blu_f1]);
 			} else {
 				if (red_f1>0 && blu_f1>0)
 					Format(report,sizeof(report),"%s \x04%N \x05vs \x04%N \x05",report,red_f1,blu_f1);
@@ -2607,7 +2610,7 @@ ShowMainMenu(client,bool:listplayers=true)
 }
 
 public Menu_Main(Handle:menu, MenuAction:action, param1, param2)
-{ 
+{
 	switch (action)
 	{
 		case MenuAction_Select:
@@ -2672,13 +2675,13 @@ public SwapMenuHandler(Handle:menu, MenuAction:action, param1, param2)
 		if(param2 == 0)
 		{
 			new client = param1;
-			if (!client) 
+			if (!client)
 				return;
-				
+
 			new arena_index = g_iPlayerArena[client];
 			new client_teammate = getTeammate(client, g_iPlayerSlot[client], arena_index);
 			swapClasses(client, client_teammate);
-	
+
 		}
 		else
 			CloseHandle(menu);
@@ -2707,7 +2710,7 @@ ShowTop5Menu(client, String:name[][], rating[])
 	new Handle:menu = CreateMenu(Menu_Top5);
 
 	Format(title, sizeof(title), "ELO Rankings \n", client);
-	
+
 	new String:si[4];
 
 	if(!g_bNoDisplayRating)
@@ -2733,13 +2736,13 @@ ShowTop5Menu(client, String:name[][], rating[])
 		}
 	}
 	SetMenuTitle(menu, title);
-	
+
 	AddMenuItem(menu, "1", "Next");
 	if(g_iELOMenuPage[client]!=0)
 	{
 		AddMenuItem(menu, "2", "back");
 	}
-	
+
 	SetMenuExitButton(menu, true);
 	DisplayMenu(menu, client, 0);
 }
@@ -2858,7 +2861,7 @@ public handler_ConVarChange(Handle:convar, const String:oldValue[], const String
 
 // ====[ COMMANDS ]====================================================
 public Action:Command_Menu(client, args)
-{ //handle commands "!ammomod" "!add" and such //building queue's menu and listing arena's	
+{ //handle commands "!ammomod" "!add" and such //building queue's menu and listing arena's
 	new playerPrefTeam = 0;
 
 	if (!IsValidClient(client))
@@ -2921,8 +2924,8 @@ public Action:Command_Menu(client, args)
 			AddInQueue(client, found_arena, true, playerPrefTeam);
 			return Plugin_Handled;
 		}
-		
-		
+
+
 	}
 
 	// Couldn't find a matching arena for the argument.
@@ -2934,7 +2937,7 @@ public Action:Command_Swap(client, args)
 {
 	if (!IsValidClient(client))
 		return Plugin_Continue;
-	
+
 	if(!g_bCanPlayerSwap[client])
 	{
 		PrintToChat(client, "You must wait 60 seconds between swap attempts!");
@@ -2945,16 +2948,16 @@ public Action:Command_Swap(client, args)
 		g_bCanPlayerSwap[client] = false;
 		CreateTimer(60.0, Timer_ResetSwap, client);
 	}
-	
+
 	new arena_index = g_iPlayerArena[client];
-	
+
 	if(!g_bArenaUltiduo[arena_index] || !g_bFourPersonArena[arena_index])
 		return Plugin_Continue;
-	
+
 	new client_teammate = getTeammate(client, g_iPlayerSlot[client], arena_index);
 	ShowSwapMenu(client_teammate);
 	return Plugin_Handled;
-	
+
 }
 
 public Action:Command_Top5(client, args)
@@ -2964,7 +2967,7 @@ public Action:Command_Top5(client, args)
 		PrintToChat(client, "No Stats is true");
 		return Plugin_Continue;
 	}
-	
+
 	g_iELOMenuPage[client] = 0;
 	decl String:query[256];
 	Format(query, sizeof(query), "SELECT rating,name FROM mgemod_stats ORDER BY rating DESC LIMIT 5");
@@ -3004,11 +3007,11 @@ public Action:Command_JoinClass(client, args)
 
 		if (new_class == g_tfctPlayerClass[client])
 			return Plugin_Handled; // no need to do anything, as nothing has changed
-		
+
 		if (arena_index == 0) // if client is on arena
 		{
 			if (!g_tfctClassAllowed[new_class]) // checking global class restrctions
-			{ 
+			{
 				CPrintToChat(client,"%t","ClassIsNotAllowed");
 				return Plugin_Handled;
 			} else {
@@ -3026,27 +3029,27 @@ public Action:Command_JoinClass(client, args)
 					{
 						TF2_SetPlayerClass(client, new_class);
 						g_tfctPlayerClass[client] = new_class;
-						
+
 					}
 				}
 				else
 				{
 					TF2_SetPlayerClass(client, new_class);
 					g_tfctPlayerClass[client] = new_class;
-					
+
 				}
 				ChangeClientTeam(client,TEAM_SPEC);
 				ShowSpecHudToArena(g_iPlayerArena[client]);
 			}
-		} 
-		else 
+		}
+		else
 		{
 			if (!g_tfctArenaAllowedClasses[arena_index][new_class])
 			{
 				CPrintToChat(client,"%t","ClassIsNotAllowed");
 				return Plugin_Handled;
 			}
-			
+
 			//if its ultiduo and a 4 man arena
 			if(g_bArenaUltiduo[arena_index] && g_bFourPersonArena[arena_index])
 			{
@@ -3063,7 +3066,7 @@ public Action:Command_JoinClass(client, args)
 					g_tfctPlayerClass[client] = new_class;
 				}
 			}
-			
+
 			if (g_iPlayerSlot[client]==SLOT_ONE || g_iPlayerSlot[client]==SLOT_TWO || (g_bFourPersonArena[arena_index] && (g_iPlayerSlot[client] == SLOT_FOUR || g_iPlayerSlot[client] == SLOT_THREE)))
 			{
 				if (g_iArenaStatus[arena_index] != AS_FIGHT || g_bArenaMGE[arena_index] || g_bArenaEndif[arena_index] || g_bArenaKoth[arena_index])
@@ -3080,18 +3083,18 @@ public Action:Command_JoinClass(client, args)
 							new killer_teammate;
 							new killer_team_slot = (killer_slot > 2) ? (killer_slot - 2) : killer_slot;
 							new client_team_slot = (g_iPlayerSlot[client] > 2) ? (g_iPlayerSlot[client] - 2) : g_iPlayerSlot[client];
-							
+
 							if(g_bFourPersonArena[arena_index])
 							{
 								killer_teammate = getTeammate(killer, killer_slot, arena_index);
 							}
 							if(g_iArenaStatus[arena_index] == AS_FIGHT && killer)
 							{
-								
+
 								g_iArenaScore[arena_index][killer_team_slot] += 1;
-								CPrintToChat(killer,"%t","ClassChangePointOpponent");	
+								CPrintToChat(killer,"%t","ClassChangePointOpponent");
 								CPrintToChat(client,"%t","ClassChangePoint");
-								
+
 								if(g_bFourPersonArena[arena_index] && killer_teammate)
 									CreateTimer(3.0,Timer_NewRound,arena_index);
 							}
@@ -3137,17 +3140,17 @@ public Action:Command_JoinClass(client, args)
 								{
 									new String:killer_teammate_name[MAX_NAME_LENGTH];
 									new String:victim_teammate_name[MAX_NAME_LENGTH];
-									
+
 									GetClientName(killer_teammate,killer_teammate_name, sizeof(killer_teammate_name));
 									GetClientName(client_teammate,victim_teammate_name, sizeof(victim_teammate_name));
-							
-									Format(killer_name, sizeof(killer_name), "%s and %s", killer_name, killer_teammate_name); 
-									Format(victim_name, sizeof(victim_name), "%s and %s", victim_name, victim_teammate_name); 
+
+									Format(killer_name, sizeof(killer_name), "%s and %s", killer_name, killer_teammate_name);
+									Format(victim_name, sizeof(victim_name), "%s and %s", victim_name, victim_teammate_name);
 								}
 								CPrintToChatAll("%t","XdefeatsY", killer_name, g_iArenaScore[arena_index][killer_team_slot], victim_name, g_iArenaScore[arena_index][client_team_slot], fraglimit, g_sArenaName[arena_index]);
 
 								g_iArenaStatus[arena_index] = AS_REPORTED;
-			
+
 								if (!g_bNoStats && g_bFourPersonArena[arena_index] /* && !g_arenaNoStats[arena_index]*/)
 									CalcELO2(killer, killer_teammate ,client, client_teammate);
 								else
@@ -3156,7 +3159,7 @@ public Action:Command_JoinClass(client, args)
 								{
 									RemoveFromQueue(client,false);
 									AddInQueue(client,arena_index,false);
-									
+
 									RemoveFromQueue(client_teammate,false);
 									AddInQueue(client_teammate,arena_index,false);
 								}
@@ -3164,16 +3167,16 @@ public Action:Command_JoinClass(client, args)
 								{
 									RemoveFromQueue(client,false);
 									AddInQueue(client,arena_index,false);
-								} 
-								else 
+								}
+								else
 								{
 									CreateTimer(3.0,Timer_StartDuel,arena_index);
 								}
 							}
-							
-							
+
+
 						}
-					
+
 						CreateTimer(0.1,Timer_ResetPlayer,GetClientUserId(client));
 					}
 					//Reset Handicap on class change to prevent an exploit where players could set their handicap to 299 as soldier
@@ -3181,9 +3184,9 @@ public Action:Command_JoinClass(client, args)
 					g_iPlayerHandicap[client] = 0;
 					ShowSpecHudToArena(g_iPlayerArena[client]);
 					return Plugin_Continue;
-					
+
 				}
-				else 
+				else
 				{
 					CPrintToChat(client, "%t", "NoClassChange");
 					return Plugin_Handled;
@@ -3441,27 +3444,27 @@ public Action:Command_Handicap(client, args)
 				} else {
 					g_iPlayerHP[client] = g_iPlayerHandicap[client];
 				}
-				
+
 				//Update overlay huds to reflect health change.
 				new player_slot = g_iPlayerSlot[client],
 					foe_slot = player_slot==SLOT_ONE ? SLOT_TWO : SLOT_ONE,
 					foe = g_iArenaQueue[arena_index][foe_slot],
 					foe_teammate,
 					player_teammate;
-					
-					
-					
-					
-					
+
+
+
+
+
 				if(g_bFourPersonArena[arena_index])
 				{
 					player_teammate = getTeammate(client, player_slot, arena_index);
 					foe_teammate = getTeammate(foe, foe_slot, arena_index);
-					
+
 					ShowPlayerHud(player_teammate);
 					ShowPlayerHud(foe_teammate);
 				}
-				
+
 				ShowPlayerHud(client);
 				ShowPlayerHud(foe);
 				ShowSpecHudToArena(g_iPlayerArena[client]);
@@ -3477,9 +3480,9 @@ public Action:Command_Handicap(client, args)
 * When a player drops the intel in BBall.
 * -------------------------------------------------------------------------- */
 public Action:Command_DropItem(client, const String:command[], argc)
-{	
+{
 	new arena_index = g_iPlayerArena[client];
-	
+
 	if(g_bArenaBBall[arena_index])
 	{
 		if (g_bPlayerHasIntel[client])
@@ -3497,8 +3500,8 @@ public Action:Command_DropItem(client, const String:command[], argc)
 				g_iBBallIntel[arena_index] = CreateEntityByName("item_ammopack_small");
 			else
 				LogError("[%s] Player dropped the intel, but intel [%i] already exists.", g_sArenaName[arena_index], g_iBBallIntel[arena_index]);
-	
-	
+
+
 			//This should fix the ammopack not being turned into a briefcase
 			DispatchKeyValue(g_iBBallIntel[arena_index], "powerup_model", MODEL_BRIEFCASE);
 			TeleportEntity(g_iBBallIntel[arena_index], pos, NULL_VECTOR, NULL_VECTOR);
@@ -3512,20 +3515,20 @@ public Action:Command_DropItem(client, const String:command[], argc)
 			AcceptEntityInput(g_iBBallIntel[arena_index], "Enable");
 
 			EmitSoundToClient(client, "vo/intel_teamdropped.wav");
-			
+
 			RemoveClientParticle(client);
-			
+
 			g_bCanPlayerGetIntel[client] = false;
 			CreateTimer(0.5, Timer_AllowPlayerCap, client);
 		}
 	}
-	
+
 	return Plugin_Continue;
 }
 
 //blocking sounds
 public Action:sound_hook(clients[64], &numClients, String:sample[PLATFORM_MAX_PATH], &entity, &channel, &Float:volume, &level, &pitch, &flags)
-{	
+{
 	if(StrContains(sample,"pl_fallpain")>=0 && g_bBlockFallDamage)
 	{
 		return Plugin_Handled;
@@ -3573,7 +3576,7 @@ PrepareSQL() // Opens the connection to the database, and creates the tables if 
 		SQL_TQuery(db, SQLErrorCheckCallback, "CREATE TABLE IF NOT EXISTS mgemod_duels (winner VARCHAR(32) NOT NULL, loser VARCHAR(32) NOT NULL, winnerscore INT(4) NOT NULL, loserscore INT(4) NOT NULL, winlimit INT(4) NOT NULL, gametime INT(11) NOT NULL, mapname VARCHAR(64) NOT NULL, arenaname VARCHAR(32) NOT NULL) DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE = InnoDB ");
 		SQL_TQuery(db, SQLErrorCheckCallback, "CREATE TABLE IF NOT EXISTS mgemod_duels_2v2 (winner VARCHAR(32) NOT NULL, winner2 VARCHAR(32) NOT NULL, loser VARCHAR(32) NOT NULL, loser2 VARCHAR(32) NOT NULL, winnerscore INT(4) NOT NULL, loserscore INT(4) NOT NULL, winlimit INT(4) NOT NULL, gametime INT(11) NOT NULL, mapname VARCHAR(64) NOT NULL, arenaname VARCHAR(32) NOT NULL) DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci ENGINE = InnoDB ");
 	}
-	
+
 }
 
 public T_SQLQueryOnConnect(Handle:owner, Handle:hndl, const String:error[], any:data)
@@ -3584,7 +3587,7 @@ public T_SQLQueryOnConnect(Handle:owner, Handle:hndl, const String:error[], any:
 	{
 		LogError("T_SQLQueryOnConnect failed: %s", error);
 		return;
-	} 
+	}
 
 	if (client < 1 || client > MaxClients || !IsClientConnected(client))
 	{
@@ -3624,12 +3627,12 @@ public T_SQLQueryOnConnect(Handle:owner, Handle:hndl, const String:error[], any:
 public T_SQL_Top5(Handle:owner, Handle:hndl, const String:error[], any:data)
 {
 	new client = data;
-	
+
 	if(hndl==INVALID_HANDLE)
 	{
 		LogError("[Top5] Query failed: %s", error);
 		return;
-	} 
+	}
 
 	if(client < 1 || client > MaxClients || !IsClientConnected(client))
 	{
@@ -3639,8 +3642,8 @@ public T_SQL_Top5(Handle:owner, Handle:hndl, const String:error[], any:data)
 
 	if(SQL_GetRowCount(hndl) == 5)
 	{
-		new rating[5], 
-		String:name[5][MAX_NAME_LENGTH], 
+		new rating[5],
+		String:name[5][MAX_NAME_LENGTH],
 		i = 0;
 
 		while(SQL_FetchRow(hndl))
@@ -3654,7 +3657,7 @@ public T_SQL_Top5(Handle:owner, Handle:hndl, const String:error[], any:data)
 			i++;
 		}
 
-		ShowTop5Menu(client, name, rating);	
+		ShowTop5Menu(client, name, rating);
 	} else {
 		CPrintToChat(client, "%t", "top5error");
 	}
@@ -3750,12 +3753,12 @@ public SQLDbConnTest(Handle:owner, Handle:hndl, const String:error[], any:data)
 
 /*
 ** ------------------------------------------------------------------
-**		______                  __      
+**		______                  __
 **	   / ____/_   _____  ____  / /______
 **	  / __/  | | / / _ \/ __ \/ __/ ___/
-**	 / /___  | |/ /  __/ / / / /_(__  ) 
-**	/_____/  |___/\___/_/ /_/\__/____/  
-** 
+**	 / /___  | |/ /  __/ / / / /_(__  )
+**	/_____/  |___/\___/_/ /_/\__/____/
+**
 ** ------------------------------------------------------------------
 **/
 
@@ -3770,10 +3773,10 @@ public Event_PlayerSpawn(Handle:event,const String:name[],bool:dontBroadcast)
 
 	if(!g_bFourPersonArena[arena_index] && g_iPlayerSlot[client] != SLOT_ONE && g_iPlayerSlot[client] != SLOT_TWO)
 		ChangeClientTeam(client, TEAM_SPEC);
-		
+
 	else if(g_bFourPersonArena[arena_index] && g_iPlayerSlot[client] != SLOT_ONE && g_iPlayerSlot[client] != SLOT_TWO && (g_iPlayerSlot[client]!=SLOT_THREE && g_iPlayerSlot[client]!=SLOT_FOUR))
 		ChangeClientTeam(client, TEAM_SPEC);
-		
+
 	if(g_bArenaMGE[arena_index])
 	{
 		g_iPlayerHP[client] = RoundToNearest(float(g_iPlayerMaxHP[client])*g_fArenaHPRatio[arena_index]);
@@ -3859,33 +3862,33 @@ public Action:Event_PlayerHurt(Handle:event,const String:name[],bool:dontBroadca
 
 public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroadcast)
 {
-	new victim = GetClientOfUserId(GetEventInt(event, "userid"));	
+	new victim = GetClientOfUserId(GetEventInt(event, "userid"));
 	new arena_index = g_iPlayerArena[victim];
-	new victim_slot = g_iPlayerSlot[victim]; 
-	
-	
+	new victim_slot = g_iPlayerSlot[victim];
+
+
 	new killer_slot = (victim_slot==SLOT_ONE || victim_slot==SLOT_THREE) ? SLOT_TWO : SLOT_ONE;
 	new killer = g_iArenaQueue[arena_index][killer_slot];
 	new killer_teammate;
 	new victim_teammate;
-	
+
 	//gets the killer and victims team slot (red 1, blu 2)
 	new killer_team_slot = (killer_slot > 2) ? (killer_slot - 2) : killer_slot;
 	new victim_team_slot = (victim_slot > 2) ? (victim_slot - 2) : victim_slot;
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		victim_teammate = getTeammate(victim, victim_slot, arena_index);
 		killer_teammate = getTeammate(killer, killer_teammate, arena_index);
 	}
-	
+
 	RemoveClientParticle(victim);
 
 	if (!arena_index)
 		ChangeClientTeam(victim, TEAM_SPEC);
 
 	new attacker = GetClientOfUserId(GetEventInt(event, "attacker"));
-		
+
 	if(g_iArenaStatus[arena_index] < AS_FIGHT && IsValidClient(attacker) && IsPlayerAlive(attacker))
 	{
 		TF2_RegeneratePlayer(attacker);
@@ -3893,13 +3896,13 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 		g_iPlayerHP[attacker] = raised_hp;
 		SetEntProp(attacker, Prop_Data, "m_iHealth", raised_hp);
 	}
-	
+
 	if (g_iArenaStatus[arena_index]<AS_FIGHT || g_iArenaStatus[arena_index]>AS_FIGHT)
 	{
 		CreateTimer(0.1,Timer_ResetPlayer,GetClientUserId(victim));
 		return Plugin_Handled;
 	}
-	
+
 	if ((g_bFourPersonArena[arena_index] && !IsPlayerAlive(killer)) || (g_bFourPersonArena[arena_index] && !IsPlayerAlive(killer_teammate) && !IsPlayerAlive(killer)))
 	{
 		if(g_bArenaAmmomod[arena_index] || g_bArenaMidair[arena_index])
@@ -3944,18 +3947,15 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 	(g_bFourPersonArena[arena_index] && !IsPlayerAlive(victim_teammate) && !g_bArenaBBall[arena_index] && !g_bArenaKoth[arena_index]))
 		g_iArenaStatus[arena_index] = AS_AFTERFIGHT;
 
-	if (g_iArenaStatus[arena_index] >= AS_FIGHT && g_iArenaStatus[arena_index] < AS_REPORTED && fraglimit > 0 && g_iArenaScore[arena_index][killer_team_slot] >= fraglimit)
+	if (g_iArenaStatus[arena_index] >= AS_FIGHT && g_iArenaStatus[arena_index] < AS_REPORTED && fraglimit > 0 && (g_iArenaScore[arena_index][killer_team_slot] >= fraglimit && g_iArenaScore[arena_index][victim_team_slot] != g_iArenaScore[arena_index][killer_team_slot]-1))
 	{
-		if (g_iArenaScore[arena_index][killer_team_slot] == fraglimit && g_iArenaScore[arena_index][victim_team_slot] == fraglimit-1)
-		{
-			//execute one chance one opportunity
-			EmitSoundToAll("sound/onechance.mp3")
-		}
 		g_iArenaStatus[arena_index] = AS_REPORTED;
 		new String:killer_name[128];
 		new String:victim_name[128];
 		GetClientName(killer,killer_name, sizeof(killer_name));
 		GetClientName(victim,victim_name, sizeof(victim_name));
+		new Bool:is_tie;
+		is_tie = (g_iArenaScore[arena_index][killer_team_slot] == g_iArenaScore[arena_index][victim_team_slot]);
 
 
 		if(g_bFourPersonArena[arena_index])
@@ -3970,13 +3970,20 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 			Format(victim_name, sizeof(victim_name), "%s and %s", victim_name, victim_teammate_name);
 		}
 
-		CPrintToChatAll("%t","XdefeatsY", killer_name, g_iArenaScore[arena_index][killer_team_slot], victim_name, g_iArenaScore[arena_index][victim_team_slot], fraglimit, g_sArenaName[arena_index]);
+		if (is_tie)
+		{
+			CPrintToChatAll("%t","XtiesY", killer_name, g_iArenaScore[arena_index][killer_team_slot], victim_name, g_iArenaScore[arena_index][victim_team_slot], fraglimit, g_sArenaName[arena_index]);
+		}
+		else
+		{
+			CPrintToChatAll("%t","XdefeatsY", killer_name, g_iArenaScore[arena_index][killer_team_slot], victim_name, g_iArenaScore[arena_index][victim_team_slot], fraglimit, g_sArenaName[arena_index]);
 
-		if (!g_bNoStats && !g_bFourPersonArena[arena_index])
-			CalcELO(killer,victim);
+			if (!g_bNoStats && !g_bFourPersonArena[arena_index])
+				CalcELO(killer,victim);
 
-		else if(!g_bNoStats)
-			CalcELO2(killer, killer_teammate, victim, victim_teammate);
+			else if(!g_bNoStats)
+				CalcELO2(killer, killer_teammate, victim, victim_teammate);
+		}
 
 		if(!g_bFourPersonArena[arena_index])
 		{
@@ -3996,7 +4003,7 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 				RemoveFromQueue(victim,false,true);
 				AddInQueue(victim_teammate,arena_index,false);
 				AddInQueue(victim,arena_index,false);
-			} 
+			}
 			else if(g_iArenaQueue[arena_index][SLOT_FOUR+1])
 			{
 				RemoveFromQueue(victim,false,true);
@@ -4006,17 +4013,18 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 				CreateTimer(3.0,Timer_StartDuel,arena_index);
 			}
 		}
-	} 
-	else if(g_bArenaAmmomod[arena_index] || g_bArenaMidair[arena_index]) 
+
+	}
+	else if(g_bArenaAmmomod[arena_index] || g_bArenaMidair[arena_index])
 	{
 		if(!g_bFourPersonArena[arena_index])
 			CreateTimer(3.0,Timer_NewRound,arena_index);
-		
+
 		else if(g_bFourPersonArena[arena_index] && !IsPlayerAlive(victim_teammate))
 			CreateTimer(3.0,Timer_NewRound,arena_index);
-		
-	} 
-	else 
+
+	}
+	else
 	{
 		if(g_bArenaBBall[arena_index])
 		{
@@ -4035,8 +4043,8 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 					g_iBBallIntel[arena_index] = CreateEntityByName("item_ammopack_small");
 				else
 					LogError("[%s] Player died with intel, but intel [%i] already exists.", g_sArenaName[arena_index], g_iBBallIntel[arena_index]);
-		
-		
+
+
 				//This should fix the ammopack not being turned into a briefcase
 				DispatchKeyValue(g_iBBallIntel[arena_index], "powerup_model", MODEL_BRIEFCASE);
 				TeleportEntity(g_iBBallIntel[arena_index], pos, NULL_VECTOR, NULL_VECTOR);
@@ -4052,7 +4060,7 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 				EmitSoundToClient(victim, "vo/intel_teamdropped.wav");
 				if(IsValidClient(killer))
 					EmitSoundToClient(killer, "vo/intel_enemydropped.wav");
-					
+
 			}
 		} else {
 			if(!g_bFourPersonArena[arena_index] && !g_bArenaKoth[arena_index])
@@ -4061,10 +4069,26 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 				new raised_hp = RoundToNearest(float(g_iPlayerMaxHP[killer])*g_fArenaHPRatio[arena_index]);
 				g_iPlayerHP[killer] = raised_hp;
 				SetEntProp(killer, Prop_Data, "m_iHealth", raised_hp);
+				if (g_iArenaScore[arena_index][killer_team_slot] >= fraglimit && g_iArenaScore[arena_index][victim_team_slot] == fraglimit-1)
+				{
+					//execute one chance one opportunity
+					EmitSoundToAll("mge/onechance.mp3");
+					//EmitSoundToClient(killer, "vo/intel_teamdropped.wav");
+					SetHudTextParams(0.50, 0.80, 10, 255, 255, 255, 255, 2, 5);
+					ShowHudText(killer, -1, "Your opponent now has one chance, one opportunity...");
+					SetHudTextParams(0.50, 0.80, 10, 255, 255, 255, 255, 2, 5);
+					ShowHudText(victim, -1, "You have one chance, one opportunity...");
+
+					new String:killer_name[128];
+					new String:victim_name[128];
+					GetClientName(killer,killer_name, sizeof(killer_name));
+					GetClientName(victim,victim_name, sizeof(victim_name));
+					CPrintToChatAll("%t","XonechanceY", victim_name, g_iArenaScore[arena_index][victim_team_slot], killer_name, g_iArenaScore[arena_index][killer_team_slot], fraglimit, g_sArenaName[arena_index]);
+				}
 			}
-			
-			
-			
+
+
+
 			if(g_bFourPersonArena[arena_index] && (GetClientTeam(victim_teammate) == TEAM_SPEC || !IsPlayerAlive(victim_teammate)))
 			{
 				//Reset the teams
@@ -4073,66 +4097,66 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 				{
 					ChangeClientTeam(victim, TEAM_BLU);
 					ChangeClientTeam(victim_teammate, TEAM_BLU);
-					
+
 					ChangeClientTeam(killer_teammate, TEAM_RED);
 				}
 				else
 				{
 					ChangeClientTeam(victim, TEAM_RED);
 					ChangeClientTeam(victim_teammate, TEAM_RED);
-				
+
 					ChangeClientTeam(killer_teammate, TEAM_BLU);
 				}
-				
+
 				//Should there be a 3 second count down in between rounds in 2v2 or just spawn and go?
 				//Timer_NewRound would create a 3 second count down where as just reseting all the players would make it just go
 				/*
 				if(killer)
 					ResetPlayer(killer);
 				if(victim_teammate)
-					ResetPlayer(victim_teammate);	
+					ResetPlayer(victim_teammate);
 				if(victim)
 					ResetPlayer(victim);
 				if(killer_teammate)
 					ResetPlayer(killer_teammate);
-					
+
 				g_iArenaStatus[arena_index] = AS_FIGHT;
 				*/
 				CreateTimer(0.1,Timer_NewRound,arena_index);
 			}
-			
-			
+
+
 		}
-		
-		
+
+
 		//TODO: Check to see if its koth and apply a spawn penalty if needed depending on who's capping
 		if(g_bArenaBBall[arena_index] || g_bArenaKoth[arena_index])
 		{
 			CreateTimer(g_fArenaRespawnTime[arena_index],Timer_ResetPlayer,GetClientUserId(victim));
-		}	
+		}
 		else if(g_bFourPersonArena[arena_index] && victim_teammate && IsPlayerAlive(victim_teammate))
 		{
 			//Set the player as waiting
 			g_iPlayerWaiting[victim] = true;
-			//change the player to spec to keep him from respawning 
+			//change the player to spec to keep him from respawning
 			CreateTimer(5.0, Timer_ChangePlayerSpec, victim);
 			//instead of respawning him
 			//CreateTimer(g_fArenaRespawnTime[arena_index],Timer_ResetPlayer,GetClientUserId(victim));
 		}
 		else
 			CreateTimer(g_fArenaRespawnTime[arena_index],Timer_ResetPlayer,GetClientUserId(victim));
-		
+
 	}
 
-	ShowPlayerHud(victim); 
+	ShowPlayerHud(victim);
 	ShowPlayerHud(killer);
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
-		ShowPlayerHud(victim_teammate); 
+		ShowPlayerHud(victim_teammate);
 		ShowPlayerHud(killer_teammate);
 	}
-	
+
 	ShowSpecHudToArena(arena_index);
 
 	return Plugin_Continue;
@@ -4178,7 +4202,7 @@ public Action:Event_RoundStart(Handle:event, const String:name[], bool:dontBroad
 	//Be totally certain that the models are chached so they can be hooked
 	PrecacheModel(MODEL_BRIEFCASE, true);
 	PrecacheModel(MODEL_AMMOPACK, true);
-	
+
 	for (new i = 0;i<=g_iArenaCount;i++)
 	{
 		if(g_bArenaBBall[i])
@@ -4242,22 +4266,22 @@ public Action:Event_RoundStart(Handle:event, const String:name[], bool:dontBroad
 				AcceptEntityInput(g_iBBallHoop[i][SLOT_TWO], "Disable");
 			}
 		}
-		
+
 		if(g_bArenaKoth[i])
 		{
 			new Float:point_loc[3];
 			point_loc[0] = g_fArenaSpawnOrigin[i][g_iArenaSpawns[i]][0];
 			point_loc[1] = g_fArenaSpawnOrigin[i][g_iArenaSpawns[i]][1];
 			point_loc[2] = g_fArenaSpawnOrigin[i][g_iArenaSpawns[i]][2];
-			
+
 			if(IsValidEdict(g_iCapturePoint[i]) && g_iCapturePoint[i] > 0)
 			{
 				RemoveEdict(g_iCapturePoint[i]);
 				g_iCapturePoint[i] = -1;
-			} 
+			}
 			// g_iCapturePoint[i] equaling -1 is not a bad thing, so don't print an error for it.
-			else if(g_iCapturePoint[i] != -1) 
-			{ 
+			else if(g_iCapturePoint[i] != -1)
+			{
 				g_iCapturePoint[i] = -1;
 			}
 
@@ -4288,12 +4312,12 @@ public Action:Event_RoundStart(Handle:event, const String:name[], bool:dontBroad
 
 /*
 ** ------------------------------------------------------------------
-**	 _______                          
+**	 _______
 **	 /_  __(_)____ ___  ___  __________
 **	  / / / // __ `__ \/ _ \/ ___/ ___/
-**	 / / / // / / / / /  __/ /  (__  ) 
-**	/_/ /_//_/ /_/ /_/\___/_/  /____/  
-**	
+**	 / / / // / / / / /  __/ /  (__  )
+**	/_/ /_//_/ /_/ /_/\___/_/  /____/
+**
 ** ------------------------------------------------------------------
 **/
 
@@ -4374,7 +4398,7 @@ public Action:Timer_CountDown(Handle:timer, any:arena_index)
 
 					if(IsValidEntity(ent))
 						SetEntPropFloat(ent, Prop_Send, "m_flNextPrimaryAttack", enginetime+float(g_iArenaCd[arena_index]));
-						
+
 					ent = GetPlayerWeaponSlot(red_f2, i);
 
 					if(IsValidEntity(ent))
@@ -4422,14 +4446,14 @@ public Action:Timer_CountDown(Handle:timer, any:arena_index)
 
 				return Plugin_Stop;
 			}
-			
-			
+
+
 			CreateTimer(1.0,Timer_CountDown,arena_index,TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
-			return Plugin_Stop;	
+			return Plugin_Stop;
 		} else {
 			g_iArenaStatus[arena_index] = AS_IDLE;
 			g_iArenaCd[arena_index] = 0;
-			return Plugin_Stop;	
+			return Plugin_Stop;
 		}
 	}
 	else
@@ -4486,13 +4510,13 @@ public Action:Timer_CountDown(Handle:timer, any:arena_index)
 				}
 				return Plugin_Stop;
 			}
-			
+
 			CreateTimer(1.0,Timer_CountDown,arena_index,TIMER_REPEAT | TIMER_FLAG_NO_MAPCHANGE);
-			return Plugin_Stop;	
+			return Plugin_Stop;
 		} else {
 			g_iArenaStatus[arena_index] = AS_IDLE;
 			g_iArenaCd[arena_index] = 0;
-			return Plugin_Stop;	
+			return Plugin_Stop;
 		}
 	}
 }
@@ -4504,7 +4528,7 @@ public Action:Timer_Tele(Handle:timer, any:userid)
 
 	if (!arena_index)
 		return;
-	
+
 	new player_slot = g_iPlayerSlot[client];
 	if ((!g_bFourPersonArena[arena_index] && player_slot>SLOT_TWO) || (g_bFourPersonArena[arena_index] && player_slot>SLOT_FOUR))
 	{
@@ -4563,7 +4587,7 @@ public Action:Timer_Tele(Handle:timer, any:userid)
 		} else {
 			offset_high = (g_iArenaSpawns[arena_index]);
 			offset_low = (((g_iArenaSpawns[arena_index]) / 2) + 1);
-			random_int = GetRandomInt(offset_low, offset_high); 
+			random_int = GetRandomInt(offset_low, offset_high);
 		}
 
 		TeleportEntity(client,g_fArenaSpawnOrigin[arena_index][random_int],g_fArenaSpawnAngles[arena_index][random_int],vel);
@@ -4578,11 +4602,11 @@ public Action:Timer_Tele(Handle:timer, any:userid)
 	// Fill the array with the spawns.
 	for(new i = 0; i < g_iArenaSpawns[arena_index]; i++)
 		RandomSpawn[i] = i+1;
-		
+
 	// Shuffle them into a random order.
 	SortIntegers(RandomSpawn, g_iArenaSpawns[arena_index], Sort_Random);
 
-	
+
 	// Now when the array is gone through sequentially, it will still provide a random spawn.
 	new Float:besteffort_dist;
 	new besteffort_spawn;
@@ -4638,7 +4662,7 @@ public Action:Timer_NewRound(Handle:timer, any:arena_index)
 public Action:Timer_StartDuel(Handle:timer, any:arena_index)
 {
 	ResetArena(arena_index);
-	
+
 	if(g_bArenaTurris[arena_index])
 	{
 		CreateTimer(5.0,Timer_RegenArena,arena_index, TIMER_REPEAT);
@@ -4664,31 +4688,31 @@ public Action:Timer_StartDuel(Handle:timer, any:arena_index)
 		g_tKothTimer[arena_index] = CreateTimer(1.0,Timer_CountDownKoth,arena_index, TIMER_REPEAT);
 		g_bTimerRunning[arena_index] = true;
 	}
-	
+
 	g_iArenaScore[arena_index][SLOT_ONE] = 0;
 	g_iArenaScore[arena_index][SLOT_TWO] = 0;
 	ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_ONE]);
 	ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_TWO]);
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_THREE]);
 		ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_FOUR]);
 	}
-	
-	
-	
+
+
+
 	ShowSpecHudToArena(arena_index);
-		
+
 	StartCountDown(arena_index);
-	
+
 }
 
 public Action:Timer_ResetPlayer(Handle:timer, any:userid)
 {
 	new client = GetClientOfUserId(userid);
 
-	if (IsValidClient(client))	
+	if (IsValidClient(client))
 		ResetPlayer(client);
 }
 
@@ -4756,7 +4780,7 @@ public Action:Timer_GiveAmmo(Handle:timer, any:userid)
 		if (IsValidEntity(weapon))
 			SetEntProp(weapon, Prop_Send, "m_iClip1", g_iPlayerClip[client][SLOT_TWO]);
 	}
-	
+
 }
 
 public Action:Timer_DeleteParticle(Handle:timer, any:particle)
@@ -4796,7 +4820,7 @@ public Action:Timer_ReconnectToDB(Handle:timer)
 }
 
 public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
-{	
+{
 	//If there was time spent on the point/time spent reverting the point add/remove perecent to the point for however long they were/n't standing on it
 	if(g_fCappedTime[arena_index] != 0)
 	{
@@ -4818,7 +4842,7 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 			{
 				SoundFileTemp = "vo/announcer_control_point_warning3.wav";
 			}
-			
+
 			if(g_iCappingTeam[arena_index] == TEAM_BLU)
 			{
 				if(IsValidClient(red_1))
@@ -4829,7 +4853,7 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 				if(IsValidClient(blu_1))
 					EmitSoundToClient(blu_1, SoundFileTemp);
 			}
-			
+
 			if(g_bFourPersonArena[arena_index])
 			{
 				new red_2 = g_iArenaQueue[arena_index][SLOT_THREE];
@@ -4840,12 +4864,12 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 						EmitSoundToClient(red_2, SoundFileTemp);
 				}
 				else
-				{	
+				{
 					if(IsValidClient(blu_2))
 						EmitSoundToClient(blu_2, SoundFileTemp);
 				}
 			}
-				
+
 		}
 		if(g_fTotalTime[arena_index] != 0)
 		{
@@ -4854,19 +4878,19 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 				cap = cap * 1.5;
 			g_fKothCappedPercent[arena_index] += cap;
 		}
-		
-		g_fCappedTime[arena_index] = 0.0;		
+
+		g_fCappedTime[arena_index] = 0.0;
 	}
 	g_fTotalTime[arena_index] = 0;
 	//If the cap is below 0 then reset it to 0
 	if(g_fKothCappedPercent[arena_index] <= 0)
 	{
 		g_fKothCappedPercent[arena_index] = 0.0;
-		
+
 		if(g_iPointState[arena_index] == NEUTRAL)
 			g_iCappingTeam[arena_index] = NEUTRAL;
 	}
-	
+
 	if(g_fKothCappedPercent[arena_index] >= 100)
 	{
 		new red1;
@@ -4874,7 +4898,7 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 		new blu1;
 		new blu2;
 		if(g_bFourPersonArena[arena_index])
-		{	
+		{
 			red1 = g_iArenaQueue[arena_index][SLOT_ONE];
 			red2 = g_iArenaQueue[arena_index][SLOT_THREE];
 			blu1 = g_iArenaQueue[arena_index][SLOT_TWO];
@@ -4885,30 +4909,30 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 					EmitSoundToClient(red1, "vo/announcer_we_lost_control.wav");
 				if(IsValidClient(red2))
 					EmitSoundToClient(red2, "vo/announcer_we_lost_control.wav");
-				if(IsValidClient(blu1))	
+				if(IsValidClient(blu1))
 					EmitSoundToClient(blu1, "vo/announcer_we_captured_control.wav");
 				if(IsValidClient(blu2))
 					EmitSoundToClient(blu2, "vo/announcer_we_captured_control.wav");
-					
+
 				g_iCappingTeam[arena_index] = TEAM_RED;
 				g_iPointState[arena_index] = TEAM_BLU;
 			}
-				
+
 			else if(g_iPointState[arena_index] == TEAM_BLU)
 			{
 				if(IsValidClient(red1))
 					EmitSoundToClient(red1, "vo/announcer_we_captured_control.wav");
 				if(IsValidClient(red2))
 					EmitSoundToClient(red2, "vo/announcer_we_captured_control.wav");
-				if(IsValidClient(blu1))	
+				if(IsValidClient(blu1))
 					EmitSoundToClient(blu1, "vo/announcer_we_lost_control.wav");
 				if(IsValidClient(blu2))
 					EmitSoundToClient(blu2, "vo/announcer_we_lost_control.wav");
 				g_iCappingTeam[arena_index] = TEAM_BLU;
 				g_iPointState[arena_index] = TEAM_RED;
 			}
-				
-				
+
+
 			else
 			{
 				if(g_iCappingTeam[arena_index] == TEAM_RED)
@@ -4938,7 +4962,7 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 				g_iCappingTeam[arena_index] = TEAM_RED;
 				g_iPointState[arena_index] = TEAM_BLU;
 			}
-				
+
 			else if(g_iPointState[arena_index] == TEAM_BLU)
 			{
 				EmitSoundToClient(red1, "vo/announcer_we_captured_control.wav");
@@ -4946,8 +4970,8 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 				g_iCappingTeam[arena_index] = TEAM_BLU;
 				g_iPointState[arena_index] = TEAM_RED;
 			}
-				
-				
+
+
 			else
 			{
 				if(g_iCappingTeam[arena_index] == TEAM_RED)
@@ -4964,33 +4988,33 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 				}
 			}
 		}
-		
+
 		g_fKothCappedPercent[arena_index] = 0.0;
 	}
 	else if(g_iKothTimer[arena_index][g_iPointState[arena_index]] > 0)
-	{	
+	{
 		g_iKothTimer[arena_index][g_iPointState[arena_index]]--;
 	}
-	
-	
-	
+
+
+
 	if(g_iArenaQueue[arena_index][SLOT_ONE])
 		ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_ONE]);
 	if(g_iArenaQueue[arena_index][SLOT_ONE])
 		ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_TWO]);
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_THREE]);
 		ShowPlayerHud(g_iArenaQueue[arena_index][SLOT_FOUR]);
 	}
-	
+
 	if(g_iArenaStatus[arena_index] > AS_FIGHT)
 	{
 		g_bTimerRunning[arena_index] = false;
 		return Plugin_Stop;
 	}
-	
+
 	//Play the count down sounds
 	if(g_iKothTimer[arena_index][g_iPointState[arena_index]] <= 5 && g_iKothTimer[arena_index][g_iPointState[arena_index]] > 0)
 	{
@@ -4999,20 +5023,20 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 		{
 			case 5 :
 				SoundFile = "vo/announcer_ends_5sec.wav";
-			case 4 : 
+			case 4 :
 				SoundFile = "vo/announcer_ends_4sec.wav";
-			case 3 : 
+			case 3 :
 				SoundFile = "vo/announcer_ends_3sec.wav";
-			case 2 : 
+			case 2 :
 				SoundFile = "vo/announcer_ends_2sec.wav";
-			case 1 : 
+			case 1 :
 				SoundFile = "vo/announcer_ends_1sec.wav";
-			default : 
+			default :
 				SoundFile = "vo/announcer_ends_5sec.wav";
 		}
-		
+
 		if(g_bFourPersonArena[arena_index])
-		{	
+		{
 			new red1 = g_iArenaQueue[arena_index][SLOT_ONE];
 			new red2 = g_iArenaQueue[arena_index][SLOT_THREE];
 			new blu1 = g_iArenaQueue[arena_index][SLOT_TWO];
@@ -5030,7 +5054,7 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 			EmitSoundToClient(red1, SoundFile);
 		}
 	}
-	
+
 	//If the point is capped, the timer for the capped team is out and the other team is not touching the point and has no cap time on the point, end the game.
 	if(g_iPointState[arena_index] > NEUTRAL && g_iKothTimer[arena_index][g_iPointState[arena_index]] <= 0 && g_fKothCappedPercent[arena_index] <= 0 && !EnemyTeamTouching(g_iPointState[arena_index], arena_index))
 	{
@@ -5045,7 +5069,7 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 		//Fixes the infinite OT sound bug, so "Overtime!" only gets played once
 		if(!g_bOvertimePlayed[arena_index][g_iPointState[arena_index]])
 		{
-			
+
 			new red1 = g_iArenaQueue[arena_index][SLOT_ONE];
 			new blu1 = g_iArenaQueue[arena_index][SLOT_TWO];
 			new num = GetRandomInt(1, 4);
@@ -5068,8 +5092,8 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 			}
 			EmitSoundToClient(blu1, SoundFileTemp);
 			EmitSoundToClient(red1, SoundFileTemp);
-			
-			
+
+
 			if(g_bFourPersonArena[arena_index])
 			{
 				new blu2 = g_iArenaQueue[arena_index][SLOT_FOUR];
@@ -5081,7 +5105,7 @@ public Action:Timer_CountDownKoth(Handle:timer, any:arena_index)
 			g_bOvertimePlayed[arena_index][g_iPointState[arena_index]] = true;
 		}
 	}
-	
+
 	return Plugin_Continue;
 }
 
@@ -5092,7 +5116,7 @@ public Action:Timer_RegenArena(Handle:timer, any:arena_index)
 
 	new client = g_iArenaQueue[arena_index][SLOT_ONE];
 	new client2 = g_iArenaQueue[arena_index][SLOT_TWO];
-	
+
 	if(IsPlayerAlive(client))
 	{
 		TF2_RegeneratePlayer(client);
@@ -5100,7 +5124,7 @@ public Action:Timer_RegenArena(Handle:timer, any:arena_index)
 		g_iPlayerHP[client] = raised_hp;
 		SetEntProp(client, Prop_Data, "m_iHealth", raised_hp);
 	}
-	
+
 	if(IsPlayerAlive(client2))
 	{
 		TF2_RegeneratePlayer(client2);
@@ -5108,7 +5132,7 @@ public Action:Timer_RegenArena(Handle:timer, any:arena_index)
 		g_iPlayerHP[client2] = raised_hp2;
 		SetEntProp(client2, Prop_Data, "m_iHealth", raised_hp2);
 	}
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		new client3 = g_iArenaQueue[arena_index][SLOT_THREE];
@@ -5128,18 +5152,18 @@ public Action:Timer_RegenArena(Handle:timer, any:arena_index)
 			SetEntProp(client4, Prop_Data, "m_iHealth", raised_hp4);
 		}
 	}
-	
+
 	return Plugin_Continue;
 }
 
 /*
 ** ------------------------------------------------------------------
-**		__  ____           
+**		__  ____
 **	   /  |/  (_)__________
 **	  / /|_/ / // ___/ ___/
-**	 / /  / / /(__  ) /__  
-**	/_/  /_/_//____/\___/  
-**						   
+**	 / /  / / /(__  ) /__
+**	/_/  /_/_//____/\___/
+**
 ** ------------------------------------------------------------------
 **/
 
@@ -5187,7 +5211,7 @@ bool:IsValidClient(iClient)
 
 /* ShootsRocketsOrPipes()
  *
- * Does this player's gun shoot rockets or pipes? 
+ * Does this player's gun shoot rockets or pipes?
  * -------------------------------------------------------------------------- */
 bool:ShootsRocketsOrPipes(client)
 {
@@ -5233,7 +5257,7 @@ Float:DistanceAboveGroundAroundPlayer(victim)
 	new Float:vAngles[3]={90.0,0.0,0.0};
 	GetClientAbsOrigin(victim,vStart);
 	new Float:minDist;
-	
+
 	for(new i = 0; i < 5; ++i)
 	{
 		new Float: tvStart[3];
@@ -5242,7 +5266,7 @@ Float:DistanceAboveGroundAroundPlayer(victim)
 		if(i == 0)
 		{
 			new Handle:trace = TR_TraceRayFilterEx(vStart, vAngles, MASK_PLAYERSOLID, RayType_Infinite,TraceEntityFilterPlayer);
-			
+
 			if(TR_DidHit(trace))
 			{
 				TR_GetEndPosition(vEnd, trace);
@@ -5308,13 +5332,13 @@ Float:DistanceAboveGroundAroundPlayer(victim)
 			}
 			CloseHandle(trace);
 		}
-		
+
 		if((tempDist > -1 && tempDist < minDist) || minDist == -1)
 		{
 				minDist = tempDist;
 		}
 	}
-	
+
 	return minDist;
 }
 
@@ -5331,15 +5355,15 @@ stock FindEntityByClassname2(startEnt, const String:classname[])
 }
 
 /* getTeammate()
- * 
+ *
  * Gets a clients teammate if he's in a 4 player arena
  * This can actually be replaced by g_iArenaQueue[SLOT_X] but I didn't realize that array existed, so YOLO
  *---------------------------------------------------------------------*/
  public getTeammate(myClient, myClientSlot, arena_index)
  {
-	
+
 	new client_teammate_slot;
-	
+
 	if(myClientSlot == SLOT_ONE)
 	{
 		client_teammate_slot = SLOT_THREE;
@@ -5350,7 +5374,7 @@ stock FindEntityByClassname2(startEnt, const String:classname[])
 	}
 	else if(myClientSlot == SLOT_THREE)
 	{
-		client_teammate_slot = SLOT_ONE;			
+		client_teammate_slot = SLOT_ONE;
 	}
 	else
 	{
@@ -5359,11 +5383,11 @@ stock FindEntityByClassname2(startEnt, const String:classname[])
 
 	new myClientTeammate = g_iArenaQueue[arena_index][client_teammate_slot];
 	return myClientTeammate;
-	
+
  }
- 
+
 /* isPlayerWaiting()
- * 
+ *
  * Gets if a client is waiting
  *---------------------------------------------------------------------*/
 bool:isPlayerWaiting(myClient)
@@ -5377,7 +5401,7 @@ bool:isPlayerWaiting(myClient)
 * --------------------------------------------------------------------------- */
 public EndKoth(any:arena_index, any:winner_team)
 {
-	
+
 	PlayEndgameSoundsToArena(arena_index, winner_team);
 	g_iArenaScore[arena_index][winner_team] += 1;
 	new fraglimit = g_iArenaFraglimit[arena_index];
@@ -5387,7 +5411,7 @@ public EndKoth(any:arena_index, any:winner_team)
 	new foe = g_iArenaQueue[arena_index][foe_slot];
 	new client_teammate;
 	new foe_teammate;
-	
+
 	//End the Timer if its still running
 	//You shouldn't need to do this, but just incase
 	if(g_bTimerRunning[arena_index])
@@ -5395,13 +5419,13 @@ public EndKoth(any:arena_index, any:winner_team)
 		KillTimer(g_tKothTimer[arena_index]);
 		g_bTimerRunning[arena_index] = false;
 	}
-	
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		client_teammate = getTeammate(client, client_slot, arena_index);
 		foe_teammate = getTeammate(foe, foe_slot, arena_index);
 	}
-	
+
 	if (fraglimit>0 && g_iArenaScore[arena_index][winner_team] >= fraglimit && g_iArenaStatus[arena_index] >= AS_FIGHT && g_iArenaStatus[arena_index] < AS_REPORTED)
 	{
 		g_iArenaStatus[arena_index] = AS_REPORTED;
@@ -5409,24 +5433,24 @@ public EndKoth(any:arena_index, any:winner_team)
 		GetClientName(foe, foe_name, sizeof(foe_name));
 		new String:client_name[MAX_NAME_LENGTH];
 		GetClientName(client, client_name, sizeof(client_name));
-		
+
 		if(g_bFourPersonArena[arena_index])
 		{
 			new String:client_teammate_name[128];
 			new String:foe_teammate_name[128];
-			
+
 			GetClientName(client_teammate,client_teammate_name, sizeof(client_teammate_name));
 			GetClientName(foe_teammate,foe_teammate_name, sizeof(foe_teammate_name));
-			
-			Format(client_name, sizeof(client_name), "%s and %s", client_name, client_teammate_name); 
-			Format(foe_name, sizeof(foe_name), "%s and %s", foe_name, foe_teammate_name); 
+
+			Format(client_name, sizeof(client_name), "%s and %s", client_name, client_teammate_name);
+			Format(foe_name, sizeof(foe_name), "%s and %s", foe_name, foe_teammate_name);
 		}
-			
+
 		CPrintToChatAll("%t","XdefeatsY", client_name, g_iArenaScore[arena_index][winner_team], foe_name, g_iArenaScore[arena_index][foe_slot], fraglimit, g_sArenaName[arena_index]);
 
 		if (!g_bNoStats && !g_bFourPersonArena[arena_index])
 			CalcELO(client,foe);
-			
+
 		else if(!g_bNoStats)
 			CalcELO2(client, client_teammate, foe, foe_teammate);
 
@@ -5446,16 +5470,16 @@ public EndKoth(any:arena_index, any:winner_team)
 		}
 	} else {
 		ResetArena(arena_index);
-		
+
 		ResetPlayer(client);
 		ResetPlayer(foe);
-			
+
 		if(g_bFourPersonArena[arena_index])
 		{
 			ResetPlayer(client_teammate);
 			ResetPlayer(foe_teammate);
 		}
-		
+
 		g_bPlayerTouchPoint[arena_index][SLOT_ONE] = false;
 		g_bPlayerTouchPoint[arena_index][SLOT_TWO] = false;
 		g_bPlayerTouchPoint[arena_index][SLOT_THREE] = false;
@@ -5472,9 +5496,9 @@ public EndKoth(any:arena_index, any:winner_team)
 		g_bTimerRunning[arena_index] = true;
 	}
 
-	ShowPlayerHud(client); 
+	ShowPlayerHud(client);
 	ShowPlayerHud(foe);
-		
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		ShowPlayerHud(client_teammate);
@@ -5489,15 +5513,15 @@ public EndKoth(any:arena_index, any:winner_team)
 public ResetArena(any:arena_index)
 {
 	//Tell the game this was a forced suicide and it shouldn't do anything about it
-	
+
 	new maxSlots;
 	if(g_bFourPersonArena[arena_index])
 		maxSlots = SLOT_FOUR;
 	else
 		maxSlots = SLOT_TWO;
-	
+
 	for(new i = SLOT_ONE; i <= maxSlots; ++i)
-	{	
+	{
 		if(IsValidClient(g_iArenaQueue[arena_index][i]) && IsPlayerAlive(g_iArenaQueue[arena_index][i]) && (g_tfctPlayerClass[g_iArenaQueue[arena_index][i]] == TF2_GetClass("medic")))
 		{
 			new index = GetPlayerWeaponSlot(g_iArenaQueue[arena_index][i], 1);
@@ -5511,19 +5535,19 @@ public ResetArena(any:arena_index)
 * Called when players want to swap classes in an ultiduo arena
 * --------------------------------------------------------------------------- */
 public swapClasses(any:client, any:client_teammate)
-{	
+{
 
 	new TFClassType:client_class = g_tfctPlayerClass[client];
 	new TFClassType:client_teammate_class = g_tfctPlayerClass[client_teammate];
-	
+
 	ForcePlayerSuicide(client);
 	TF2_SetPlayerClass(client, client_teammate_class, false,true);
 	ForcePlayerSuicide(client_teammate);
 	TF2_SetPlayerClass(client_teammate, client_class, false, true);
-	
+
 	g_tfctPlayerClass[client] = client_teammate_class;
 	g_tfctPlayerClass[client_teammate] = client_class;
-	
+
 }
 
 /*	EnemyTeamTouching(any:team)
@@ -5531,7 +5555,7 @@ public swapClasses(any:client, any:client_teammate)
 * Returns of a player on the other team is touching the point
 * --------------------------------------------------------------------------- */
 public bool:EnemyTeamTouching(any:team, any:arena_index)
-{	
+{
 	if(team == TEAM_RED)
 	{
 		if(g_bPlayerTouchPoint[arena_index][SLOT_TWO])
@@ -5559,7 +5583,7 @@ public PlayEndgameSoundsToArena(any:arena_index, any:winner_team)
 	new blu_1 = g_iArenaQueue[arena_index][SLOT_TWO];
 	new String:SoundFileBlu[124];
 	new String:SoundFileRed[124];
-	
+
 	//If the red team won
 	if(winner_team == 1)
 	{
@@ -5577,7 +5601,7 @@ public PlayEndgameSoundsToArena(any:arena_index, any:winner_team)
 
 	if(IsValidClient(blu_1))
 		EmitSoundToClient(blu_1, SoundFileBlu);
-			
+
 	if(g_bFourPersonArena[arena_index])
 	{
 		new red_2 = g_iArenaQueue[arena_index][SLOT_THREE];
@@ -5588,7 +5612,7 @@ public PlayEndgameSoundsToArena(any:arena_index, any:winner_team)
 				EmitSoundToClient(red_2, SoundFileRed);
 		}
 		else
-		{	
+		{
 			if(IsValidClient(blu_2))
 				EmitSoundToClient(blu_2, SoundFileBlu);
 		}
