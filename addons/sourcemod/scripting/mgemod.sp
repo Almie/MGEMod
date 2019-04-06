@@ -3935,44 +3935,49 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 
 	//Currently set up so that if its a 2v2 duel the round will reset after both players on one team die and a point will be added for that round to the other team
 	//Another possibility is to make it like dm where its instant respawn for every player, killer gets hp, and a point is awarded for every kill
-	
+
 
 	new fraglimit = g_iArenaFraglimit[arena_index];
-	
-	
-	if((!g_bFourPersonArena[arena_index] && (g_bArenaAmmomod[arena_index] || g_bArenaMidair[arena_index])) || 
-	(g_bFourPersonArena[arena_index] && !IsPlayerAlive(victim_teammate) && !g_bArenaBBall[arena_index] && !g_bArenaKoth[arena_index]))	
+
+
+	if((!g_bFourPersonArena[arena_index] && (g_bArenaAmmomod[arena_index] || g_bArenaMidair[arena_index])) ||
+	(g_bFourPersonArena[arena_index] && !IsPlayerAlive(victim_teammate) && !g_bArenaBBall[arena_index] && !g_bArenaKoth[arena_index]))
 		g_iArenaStatus[arena_index] = AS_AFTERFIGHT;
-	
+
 	if (g_iArenaStatus[arena_index] >= AS_FIGHT && g_iArenaStatus[arena_index] < AS_REPORTED && fraglimit > 0 && g_iArenaScore[arena_index][killer_team_slot] >= fraglimit)
 	{
+		if (g_iArenaScore[arena_index][killer_team_slot] == fraglimit && g_iArenaScore[arena_index][victim_team_slot] == fraglimit-1)
+		{
+			//execute one chance one opportunity
+			EmitSoundToAll("sound/onechance.mp3")
+		}
 		g_iArenaStatus[arena_index] = AS_REPORTED;
 		new String:killer_name[128];
 		new String:victim_name[128];
 		GetClientName(killer,killer_name, sizeof(killer_name));
 		GetClientName(victim,victim_name, sizeof(victim_name));
-		
-		
+
+
 		if(g_bFourPersonArena[arena_index])
 		{
 			new String:killer_teammate_name[128];
 			new String:victim_teammate_name[128];
-			
+
 			GetClientName(killer_teammate,killer_teammate_name, sizeof(killer_teammate_name));
 			GetClientName(victim_teammate,victim_teammate_name, sizeof(victim_teammate_name));
-			
-			Format(killer_name, sizeof(killer_name), "%s and %s", killer_name, killer_teammate_name); 
-			Format(victim_name, sizeof(victim_name), "%s and %s", victim_name, victim_teammate_name); 
+
+			Format(killer_name, sizeof(killer_name), "%s and %s", killer_name, killer_teammate_name);
+			Format(victim_name, sizeof(victim_name), "%s and %s", victim_name, victim_teammate_name);
 		}
-		
+
 		CPrintToChatAll("%t","XdefeatsY", killer_name, g_iArenaScore[arena_index][killer_team_slot], victim_name, g_iArenaScore[arena_index][victim_team_slot], fraglimit, g_sArenaName[arena_index]);
 
 		if (!g_bNoStats && !g_bFourPersonArena[arena_index])
 			CalcELO(killer,victim);
-			
+
 		else if(!g_bNoStats)
 			CalcELO2(killer, killer_teammate, victim, victim_teammate);
-			
+
 		if(!g_bFourPersonArena[arena_index])
 		{
 			if (g_iArenaQueue[arena_index][SLOT_TWO+1])
