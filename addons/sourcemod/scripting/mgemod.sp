@@ -2036,9 +2036,11 @@ CalcELO(winner, loser)
 	new Float:El = 1/(Pow(10.0, float((g_iPlayerRating[winner]-g_iPlayerRating[loser]))/400)+1);
 	new k = (g_iPlayerRating[winner]>=2400) ? 10 : 15;
 	new winnerscore = RoundFloat(k*El);
+	winnerscore = (winnerscore == 0) ? 1 : winnerscore;
 	g_iPlayerRating[winner] += winnerscore;
 	k = (g_iPlayerRating[loser]>=2400) ? 10 : 15;
 	new loserscore = RoundFloat(k*El);
+	loserscore = (loserscore == 0) ? 1 : loserscore;
 	g_iPlayerRating[loser] -= loserscore;
 
 	new arena_index = g_iPlayerArena[winner];
