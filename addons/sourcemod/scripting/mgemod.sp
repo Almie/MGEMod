@@ -382,7 +382,7 @@ public OnMapStart()
 		PrecacheSound(stockSounds[i], true);
 
 	PrecacheSound("mge/onechance.mp3", true);
-  AddFileToDownloadsTable("sound/mge/onechance.mp3");
+	AddFileToDownloadsTable("sound/mge/onechance.mp3");
 
 	// Models. These are used for the artifical flag in BBall.
 	PrecacheModel(MODEL_BRIEFCASE, true);
@@ -4078,8 +4078,10 @@ public Action:Event_PlayerDeath(Handle:event, const String:name[], bool:dontBroa
 					//EmitSoundToClient(killer, "vo/intel_teamdropped.wav");
 					SetHudTextParams(0.50, 0.80, 10, 255, 255, 255, 255, 2, 5);
 					ShowHudText(killer, -1, "Your opponent now has one chance, one opportunity...");
+					//ShowSyncHudText(killer, hm_OneChance, "Your opponent now has one chance, one opportunity...");
 					SetHudTextParams(0.50, 0.80, 10, 255, 255, 255, 255, 2, 5);
 					ShowHudText(victim, -1, "You have one chance, one opportunity...");
+					//ShowSyncHudText(victim, hm_OneChance, "You have one chance, one opportunity...");
 
 					new String:killer_name[128];
 					new String:victim_name[128];
